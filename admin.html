@@ -83,8 +83,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <button type="button" data-type="industries">产业领域</button>
         <button type="button" data-type="demos">研究看板</button>
         <button type="button" data-type="topics">专题研究</button>
+        <button type="button" id="members-tab" class="secondary">会员管理</button>
       </div>
       <div class="notice">新增或编辑内容后点击保存。取消“公开发布”后，该条目不会出现在公开首页。删除操作不可撤销；国家或产业若仍被看板引用，需要先调整关联关系。</div>
+      <div id="content-form-panel">
       <h3 id="form-title">新增国家市场</h3>
       <form id="record-form">
         <input id="record-id" type="hidden">
@@ -107,17 +109,27 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <div><label for="country_id">关联国家</label><select id="country_id"><option value="">请选择国家</option></select></div>
             <div><label for="industry_id">关联产业</label><select id="industry_id"><option value="">请选择产业</option></select></div>
           </div>
-          <label for="page_url">完整看板网址 *</label><input id="page_url" type="url" placeholder="https://..." >
+          <label for="page_url">公开看板网址（公开/半公开模式填写）</label><input id="page_url" type="url" placeholder="https://...；会员专享模式可留空">
+          <div id="private-dashboard-upload-panel" style="margin-top:14px;padding:14px;border:1px solid #e2e8ef;border-radius:8px;background:#f8fafb">
+            <label for="private_path">会员专享 HTML 文件（上传到私有存储）</label><input id="private_path" type="text" readonly placeholder="选择 HTML 文件上传后自动填入存储路径">
+            <div class="actions" style="margin-top:8px"><button type="button" id="upload-private-dashboard-button" class="secondary">上传完整看板 HTML</button><input id="private-dashboard-file" type="file" accept=".html,text/html" class="hidden"><span id="private-dashboard-upload-status" class="sub" style="align-self:center"></span></div>
+            <div class="sub" style="margin-top:7px;line-height:1.7">仅用于“会员专享”模式。建议上传自包含的单文件 HTML（图表库可使用 CDN）。若页面依赖同目录图片、JSON、CSS 等文件，需要另外设计资源打包和授权，不能只上传主 HTML。</div>
+          </div>
           <div class="row">
-            <div><label for="access_mode">访问方式</label><select id="access_mode"><option value="public">完全公开</option><option value="semi">半公开预览 + 定制咨询</option></select></div>
+            <div><label for="access_mode">访问方式</label><select id="access_mode"><option value="public">完全公开</option><option value="semi">半公开预览 + 定制咨询</option><option value="members">会员专享（私有 HTML）</option></select></div>
             <div><label for="preview_percent">预览区域比例（20–70%）</label><input id="preview_percent" type="number" min="20" max="70" value="45"></div>
           </div>
           <label for="preview_url">独立预览版网址（半公开建议填写）</label><input id="preview_url" type="url" placeholder="https://...">
           <div class="row">
-            <div><label for="qr_url">微信咨询二维码图片网址</label><input id="qr_url" type="url" placeholder="https://..."></div>
+            <div>
+              <label for="qr_url">微信咨询二维码图片</label>
+              <input id="qr_url" type="url" placeholder="上传后自动填入图片地址，也可手动填写">
+              <div class="actions" style="margin-top:8px"><button type="button" id="upload-qr-button" class="secondary">上传二维码图片</button><input id="qr-file" type="file" accept="image/png,image/jpeg,image/webp" class="hidden"><span id="qr-upload-status" class="sub" style="align-self:center"></span></div>
+              <div id="qr-preview-wrap" class="hidden" style="margin-top:10px;padding:10px;background:#f4f6f9;border:1px solid #e2e8ef;border-radius:6px"><img id="qr-preview" alt="二维码预览" style="display:block;width:140px;height:140px;object-fit:contain;background:white"><div class="sub" style="margin-top:6px">确认图片无误后，继续点击下方“保存内容”保存到看板记录。</div></div>
+            </div>
             <div><label for="tags">搜索标签（逗号分隔）</label><input id="tags" placeholder="市场准入，认证，贸易数据"></div>
           </div>
-          <label for="consult_text">半公开咨询提示文案</label><textarea id="consult_text" maxlength="1000" placeholder="当前为公开预览。完整产业数据与深度研究，可扫码咨询定制服务。"></textarea>
+          <label for="consult_text">半公开咨询提示文案</label><textarea id="consult_text" maxlength="1000" placeholder="当前为预览版。完整产业数据与深度研究，可扫码咨询定制服务。"></textarea>
           <div class="notice">半公开模式请尽量配置独立的预览版 HTML。只在完整页面上覆盖遮罩不能保护源页面中的数据。</div>
         </div>
 
@@ -136,11 +148,25 @@ button:disabled{opacity:.5;cursor:not-allowed}
           <button id="reset-button" type="button" class="secondary">清空表单</button>
         </div>
       </form>
+      </div>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="content-list-panel">
       <h2 id="list-title">国家市场列表</h2>
       <div id="record-list" class="list"></div>
+    </div>
+
+    <div class="panel hidden" id="member-panel">
+      <h2>会员管理</h2>
+      <div class="notice">用户先在 member.html 注册。人工核实付款后，在此输入注册邮箱查找账号，再设置有效期并开通。请不要让用户把密码发给管理员。</div>
+      <div class="row"><div><label for="member-email-search">用户注册邮箱</label><input id="member-email-search" type="email" placeholder="user@example.com"></div><div style="display:flex;align-items:end"><button id="member-search-button" type="button">查找用户</button></div></div>
+      <div id="member-search-status" class="status"></div><div id="member-search-results" class="list" style="margin-top:14px"></div>
+      <div id="member-edit-area" class="hidden" style="margin-top:20px;padding-top:18px;border-top:1px solid var(--line)">
+        <h3 id="member-selected-title">会员权益设置</h3><input id="member-user-id" type="hidden">
+        <div class="row"><div><label for="member-start">开通时间</label><input id="member-start" type="datetime-local"></div><div><label for="member-expiry">到期时间</label><input id="member-expiry" type="datetime-local"></div></div>
+        <label for="member-note">备注（例如付款日期/订单号）</label><input id="member-note" maxlength="500" placeholder="人工确认到账后填写，避免记录支付敏感信息">
+        <div class="actions"><button id="member-grant-button" type="button">开通 / 更新会员</button><button id="member-revoke-button" type="button" class="danger">撤销会员</button></div><div id="member-status" class="status"></div>
+      </div>
     </div>
   </section>
 </main>
@@ -154,7 +180,7 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 const configs = {
   countries:{label:"国家市场",table:"countries",fields:["name","code","description","cover_url","sort_order","is_published"]},
   industries:{label:"产业领域",table:"industries",fields:["name","category","description","sort_order","is_published"]},
-  demos:{label:"研究看板",table:"demos",fields:["name","country_id","industry_id","description","page_url","access_mode","preview_url","preview_percent","qr_url","consult_text","tags","sort_order","is_published"]},
+  demos:{label:"研究看板",table:"demos",fields:["name","country_id","industry_id","description","page_url","private_path","access_mode","preview_url","preview_percent","qr_url","consult_text","tags","sort_order","is_published"]},
   topics:{label:"专题研究",table:"topics",fields:["name","description","page_url","sort_order","is_published"]}
 };
 let currentType = "countries";
@@ -166,6 +192,38 @@ function escapeHtml(v){
 }
 function setStatus(id,msg){$(id).textContent=msg;}
 function setBusy(b){$("save-button").disabled=b;}
+const QR_BUCKET = "consultation-qr";
+const PRIVATE_DASHBOARD_BUCKET = "private-dashboards";
+async function uploadPrivateDashboard(file){
+  if(!file)return;
+  if(!file.name.toLowerCase().endsWith(".html") && file.type!=="text/html"){setStatus("private-dashboard-upload-status","请选择 .html 文件。");return;}
+  if(file.size>20*1024*1024){setStatus("private-dashboard-upload-status","文件不能超过 20MB。");return;}
+  const button=$("upload-private-dashboard-button");button.disabled=true;setStatus("private-dashboard-upload-status","正在上传完整看板……");
+  try{const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";const path=`${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;const result=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"0",upsert:false,contentType:"text/html"});if(result.error)throw result.error;$("private_path").value=result.data.path;setStatus("private-dashboard-upload-status","上传成功。保存看板记录后才会关联该文件。");}catch(e){console.error(e);setStatus("private-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认已执行会员权限 SQL，并确认当前账号为管理员。");}finally{button.disabled=false;$("private-dashboard-file").value="";}
+}
+function updateAccessModeUI(){const mode=$("access_mode").value;$("page_url").required=currentType==="demos"&&mode!=="members";$("private-dashboard-upload-panel").style.borderColor=mode==="members"?"#c5a46a":"#e2e8ef";$("private-dashboard-upload-status").textContent=mode==="members"?"会员专享模式需要上传完整 HTML 文件。":"会员专享文件为可选项。";}
+function refreshQrPreview(url){
+  const wrap=$("qr-preview-wrap"),img=$("qr-preview");
+  if(url){img.src=url;wrap.classList.remove("hidden");}else{img.removeAttribute("src");wrap.classList.add("hidden");}
+}
+async function uploadQrImage(file){
+  if(!file)return;
+  if(!["image/png","image/jpeg","image/webp"].includes(file.type)){setStatus("qr-upload-status","请选择 PNG、JPG 或 WEBP 图片。 ");return;}
+  if(file.size>2*1024*1024){setStatus("qr-upload-status","图片不能超过 2MB，请先压缩后再上传。");return;}
+  const button=$("upload-qr-button");button.disabled=true;setStatus("qr-upload-status","正在上传二维码……");
+  try{
+    const ext=({"image/png":"png","image/jpeg":"jpg","image/webp":"webp"})[file.type]||"png";
+    const path=`${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;
+    const result=await db.storage.from(QR_BUCKET).upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+    if(result.error)throw result.error;
+    const pub=db.storage.from(QR_BUCKET).getPublicUrl(result.data.path);
+    if(!pub.data?.publicUrl)throw new Error("上传成功，但未能生成公开图片地址。");
+    $("qr_url").value=pub.data.publicUrl;refreshQrPreview(pub.data.publicUrl);
+    setStatus("qr-upload-status","上传成功。请继续点击“保存内容”保存看板记录。");
+  }catch(e){
+    console.error(e);setStatus("qr-upload-status","上传失败："+(e.message||String(e))+"。请确认已创建 consultation-qr 存储桶并配置管理员上传权限。");
+  }finally{button.disabled=false;$("qr-file").value="";}
+}
 function resetForm(){
   $("record-form").reset();
   $("record-id").value="";
@@ -178,8 +236,12 @@ function resetForm(){
   $("access_mode").value="public";
   $("preview_url").value="";
   $("preview_percent").value="45";
+  $("private_path").value="";
+  setStatus("private-dashboard-upload-status", "");
   $("qr_url").value="";
-  $("consult_text").value="当前为公开预览。完整产业数据与深度研究，可扫码咨询定制服务。";
+  refreshQrPreview("");
+  setStatus("qr-upload-status","");
+  $("consult_text").value="当前为预览版。完整产业数据与深度研究，可扫码咨询定制服务。";
   $("tags").value="";
 }
 function showType(type){
@@ -189,12 +251,18 @@ function showType(type){
   $("industry-fields").classList.toggle("hidden",type!=="industries");
   $("demo-fields").classList.toggle("hidden",type!=="demos");
   $("topic-fields").classList.toggle("hidden",type!=="topics");
+  $("content-form-panel").classList.remove("hidden");
+  $("content-list-panel").classList.remove("hidden");
+  $("member-panel").classList.add("hidden");
+  $("members-tab").classList.remove("active");
   $("code").required=false;
-  $("page_url").required=type==="demos";
+  $("page_url").required=type==="demos" && $("access_mode").value!=="members";
   $("topic_url").required=type==="topics";
   $("form-title").textContent="新增"+configs[type].label;
+  updateAccessModeUI();
   $("list-title").textContent=configs[type].label+"列表";
   resetForm();
+  updateAccessModeUI();
   renderList();
 }
 async function refreshData(){
@@ -223,9 +291,9 @@ function renderList(){
   $("record-list").innerHTML=rows.length?rows.map(r=>{
     const related=relatedText(currentType,r);
     const url=r.page_url||"";
-    const mode=currentType==="demos"?(r.access_mode==="semi"?"半公开预览":"完全公开"):"";
+    const mode=currentType==="demos"?(r.access_mode==="semi"?"半公开预览":r.access_mode==="members"?"会员专享":"完全公开"):"";
      const tags=currentType==="demos"&&Array.isArray(r.tags)&&r.tags.length?"<br>标签："+escapeHtml(r.tags.join("、")):"";
-     return `<div class="item"><div><div class="item-title">${escapeHtml(r.name)} ${r.is_published===false?'<span style="color:#a33a3a;font-size:12px">（未发布）</span>':''} ${mode?'<span style="color:#8b6a31;font-size:12px">（'+mode+'）</span>':''}</div><div class="item-desc">${escapeHtml(related?related+" · ":"")}${escapeHtml(r.description||"")}${url?"<br>"+escapeHtml(url):""}${tags}</div></div><div class="item-actions"><button type="button" class="secondary" data-edit="${escapeHtml(r.id)}">编辑</button><button type="button" class="danger" data-delete="${escapeHtml(r.id)}">删除</button></div></div>`;
+     return `<div class="item"><div><div class="item-title">${escapeHtml(r.name)} ${r.is_published===false?'<span style="color:#a33a3a;font-size:12px">（未发布）</span>':''} ${mode?'<span style="color:#8b6a31;font-size:12px">（'+mode+'）</span>':''}</div><div class="item-desc">${escapeHtml(related?related+" · ":"")}${escapeHtml(r.description||"")}${url?"<br>"+escapeHtml(url):""}${currentType==="demos"&&r.private_path?"<br>私有文件：已配置":""}${tags}</div></div><div class="item-actions"><button type="button" class="secondary" data-edit="${escapeHtml(r.id)}">编辑</button><button type="button" class="danger" data-delete="${escapeHtml(r.id)}">删除</button></div></div>`;
   }).join(""):'<div class="status">暂无记录，可以在上方新增。</div>';
 }
 function editRecord(id){
@@ -243,11 +311,14 @@ function editRecord(id){
   $("industry_id").value=r.industry_id||"";
   if(currentType==="demos"){
     $("page_url").value=r.page_url||"";
+    $("private_path").value=r.private_path||"";
     $("access_mode").value=r.access_mode||"public";
+    updateAccessModeUI();
     $("preview_url").value=r.preview_url||"";
     $("preview_percent").value=r.preview_percent??45;
     $("qr_url").value=r.qr_url||"";
-    $("consult_text").value=r.consult_text||"当前为公开预览。完整产业数据与深度研究，可扫码咨询定制服务。";
+    refreshQrPreview(r.qr_url||"");
+    $("consult_text").value=r.consult_text||"当前为预览版。完整产业数据与深度研究，可扫码咨询定制服务。";
     $("tags").value=Array.isArray(r.tags)?r.tags.join("，"):(r.tags||"");
   }
   if(currentType==="topics")$("topic_url").value=r.page_url||"";
@@ -274,14 +345,16 @@ async function saveRecord(event){
     if(type==="demos"){
       r.country_id=$("country_id").value||null;
       r.industry_id=$("industry_id").value||null;
-      r.page_url=$("page_url").value.trim();
+      r.page_url=$("page_url").value.trim()||null;
+      r.private_path=$("private_path").value.trim()||null;
       r.access_mode=$("access_mode").value||"public";
       r.preview_url=$("preview_url").value.trim()||null;
       r.preview_percent=Math.max(20,Math.min(70,Number($("preview_percent").value)||45));
       r.qr_url=$("qr_url").value.trim()||null;
       r.consult_text=$("consult_text").value.trim()||null;
       r.tags=$("tags").value.split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
-      if(!r.page_url)throw new Error("请填写完整看板网址");
+      if(r.access_mode==="members"&&!r.private_path)throw new Error("会员专享模式请先上传完整看板 HTML 文件");
+      if(r.access_mode!=="members"&&!r.page_url)throw new Error("公开或半公开模式请填写看板网址");
       if(r.access_mode==="semi"&&!r.preview_url) {
         const ok=confirm("你选择了半公开模式，但没有填写独立预览版网址。继续保存可能会使用完整看板作为预览，遮罩不能保护原始页面内容。仍要继续吗？");
         if(!ok)throw new Error("已取消保存，请填写独立预览版网址。");
@@ -310,6 +383,14 @@ async function deleteRecord(id){
   try{await refreshData();setStatus("admin-status","删除成功。");}
   catch(e){setStatus("admin-status","删除完成，但刷新列表失败："+e.message);}
 }
+let selectedMember=null;
+function localDateTimeValue(date){const d=new Date(date.getTime()-date.getTimezoneOffset()*60000);return d.toISOString().slice(0,16);}
+function showMemberManager(){document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));$("members-tab").classList.add("active");$("content-form-panel").classList.add("hidden");$("content-list-panel").classList.add("hidden");$("member-panel").classList.remove("hidden");$("form-title").textContent="会员管理";}
+async function searchMember(){const email=$("member-email-search").value.trim();if(!email){setStatus("member-search-status","请先填写用户注册邮箱。");return;}setStatus("member-search-status","正在查找账号……");$("member-search-results").innerHTML="";$("member-edit-area").classList.add("hidden");try{const {data,error}=await db.from("member_profiles").select("user_id,email,created_at").ilike("email",email).limit(10);if(error)throw error;if(!data||!data.length){setStatus("member-search-status","没有找到该邮箱对应的账号。请确认用户已经注册并完成邮箱验证，或检查邮箱是否拼写正确。");return;}$("member-search-results").innerHTML=data.map(u=>`<div class="item"><div><div class="item-title">${escapeHtml(u.email)}</div><div class="item-desc">用户 ID：${escapeHtml(u.user_id)}<br>注册时间：${u.created_at?new Date(u.created_at).toLocaleString("zh-CN"):"—"}</div></div><div class="item-actions"><button type="button" class="secondary" data-select-member="${escapeHtml(u.user_id)}">管理该用户</button></div></div>`).join("");setStatus("member-search-status",`找到 ${data.length} 个匹配账号。请选择要开通的用户。`);}catch(e){setStatus("member-search-status","查找失败："+(e.message||String(e))+"。请确认已执行会员权限 SQL。");}}
+async function selectMember(userId){const {data:user,error:userError}=await db.from("member_profiles").select("user_id,email").eq("user_id",userId).single();if(userError){setStatus("member-status",userError.message);return;}selectedMember=user;$("member-user-id").value=user.user_id;$("member-selected-title").textContent="会员权益设置 · "+user.email;const {data:ent,error}=await db.from("memberships").select("status,starts_at,expires_at,note").eq("user_id",user.user_id).maybeSingle();if(error){setStatus("member-status",error.message);return;}const now=new Date();$("member-start").value=ent?.starts_at?localDateTimeValue(new Date(ent.starts_at)):localDateTimeValue(now);$("member-expiry").value=ent?.expires_at?localDateTimeValue(new Date(ent.expires_at)):localDateTimeValue(new Date(now.getTime()+365*24*60*60*1000));$("member-note").value=ent?.note||"";$("member-edit-area").classList.remove("hidden");setStatus("member-status",ent?`当前状态：${ent.status}；到期时间：${ent.expires_at?new Date(ent.expires_at).toLocaleString("zh-CN"):"未设置"}`:"该用户尚无会员记录。可以在核实付款后开通。");}
+async function saveMembership(revoke=false){if(!selectedMember){setStatus("member-status","请先查找并选择用户。");return;}const button=revoke?$("member-revoke-button") : $("member-grant-button");button.disabled=true;try{const start=$("member-start").value?new Date($("member-start").value).toISOString():new Date().toISOString();const expiry=$("member-expiry").value?new Date($("member-expiry").value).toISOString():null;if(!expiry)throw new Error("请设置会员到期时间。");if(!revoke&&new Date(expiry)<=new Date(start))throw new Error("到期时间必须晚于开通时间。");const payload={user_id:selectedMember.user_id,status:revoke?"inactive":"active",starts_at:start,expires_at:expiry,note:$("member-note").value.trim()||null,granted_by:(await db.auth.getUser()).data.user?.id||null,updated_at:new Date().toISOString()};const {error}=await db.from("memberships").upsert(payload,{onConflict:"user_id"});if(error)throw error;setStatus("member-status",revoke?"已停用该用户的会员资格。":"会员已开通/更新。该账号刷新后即可访问全部已配置的会员专享看板。", "success");}catch(e){setStatus("member-status","操作失败："+(e.message||String(e)));}finally{button.disabled=false;}}
+$("members-tab").addEventListener("click",showMemberManager);$("member-search-button").addEventListener("click",searchMember);$("member-email-search").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchMember();}});$("member-search-results").addEventListener("click",e=>{const b=e.target.closest("[data-select-member]");if(b)selectMember(b.dataset.selectMember);});$("member-grant-button").addEventListener("click",()=>saveMembership(false));$("member-revoke-button").addEventListener("click",()=>{if(confirm("确定撤销该用户的会员权限吗？"))saveMembership(true);});
+
 $("login-form").addEventListener("submit",async e=>{
   e.preventDefault();setStatus("login-status","正在登录……");
   const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
@@ -348,11 +429,26 @@ $("record-list").addEventListener("click",e=>{
   if(del)deleteRecord(del.dataset.delete);
 });
 $("record-form").addEventListener("submit",saveRecord);
+$("upload-qr-button").addEventListener("click",()=>$("qr-file").click());
+$("qr-file").addEventListener("change",event=>uploadQrImage(event.target.files?.[0]));
+$("upload-private-dashboard-button").addEventListener("click",()=>$("private-dashboard-file").click());
+$("private-dashboard-file").addEventListener("change",event=>uploadPrivateDashboard(event.target.files?.[0]));
+$("access_mode").addEventListener("change",updateAccessModeUI);
+$("qr_url").addEventListener("input",()=>refreshQrPreview($("qr_url").value.trim()));
 $("reset-button").addEventListener("click",resetForm);
-showType("countries");
+const params = new URLSearchParams(window.location.search);
+const requestedType = params.get("type");
+const validTypes = Object.keys(configs);
+showType(validTypes.includes(requestedType) ? requestedType : "countries");
 (async()=>{
   const {data:{session}}=await db.auth.getSession();
   if(session?.user)await enterAdmin(session.user);
+  if(params.get("new")==="1"){
+    // Wait until the requested section is selected, then focus the first field for a quick-add flow.
+    setTimeout(()=>{
+      if(!$("admin-panel").classList.contains("hidden")) $("name").focus();
+    },250);
+  }
 })();
 </script>
 </body>
