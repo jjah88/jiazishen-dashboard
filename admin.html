@@ -1,0 +1,322 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理后台｜甲子申产业出海看板</title>
+<style>
+:root{--ink:#172b45;--muted:#6b7a8c;--line:#e2e8ef;--paper:#f4f6f9;--blue:#244f78;--red:#a33a3a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+header{background:#fff;border-bottom:1px solid var(--line)}
+.top{max-width:1100px;margin:auto;padding:22px}
+.brand{font-size:12px;letter-spacing:2px;color:#58718a}
+h1{font-size:25px;margin:10px 0 5px}
+.sub{font-size:13px;color:var(--muted)}
+main{max-width:1100px;margin:26px auto;padding:0 22px 50px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:22px;margin-bottom:18px}
+h2{font-size:18px;margin:0 0 16px}
+h3{font-size:15px;margin:0 0 12px}
+label{display:block;font-size:13px;color:#536579;margin:12px 0 6px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #d7dfe8;border-radius:6px;font:inherit;font-size:14px;background:white;color:var(--ink)}
+textarea{min-height:76px;resize:vertical}
+button{padding:10px 16px;border:1px solid var(--blue);border-radius:6px;background:var(--blue);color:white;font:inherit;font-size:13px;cursor:pointer}
+button.secondary{background:#fff;color:var(--blue)}
+button.danger{background:#fff;color:var(--red);border-color:#e2bcbc}
+button:disabled{opacity:.5;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tabs button.active{background:#172b45;border-color:#172b45}
+.list{display:grid;gap:10px}
+.item{border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;justify-content:space-between;gap:14px;align-items:center}
+.item-title{font-weight:600;font-size:14px}
+.item-desc{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.6;overflow-wrap:anywhere}
+.item-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.item-actions button{padding:7px 10px}
+.status{font-size:13px;line-height:1.7;color:var(--muted);margin-top:12px;white-space:pre-wrap}
+.notice{background:#f3f6f9;border-radius:6px;padding:12px;font-size:13px;line-height:1.7;color:#536579;margin-bottom:16px}
+.hidden{display:none!important}
+@media(max-width:650px){main{padding:0 12px 30px}.top{padding:20px 14px}.row{grid-template-columns:1fr}.panel{padding:16px}.item{align-items:flex-start;flex-direction:column}.item-actions{width:100%}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">JIAZISHEN · 甲子申</div>
+    <h1>产业出海看板 · 管理后台</h1>
+    <div class="sub">管理国家市场、产业领域、专题研究与公开看板</div>
+  </div>
+</header>
+
+<main>
+  <section id="login-panel" class="panel">
+    <h2>管理员登录</h2>
+    <div class="notice">仅授权的管理员账号可以管理内容。请使用你之前在 Supabase Authentication 中创建的邮箱和密码。</div>
+    <form id="login-form">
+      <label for="email">管理员邮箱</label>
+      <input id="email" type="email" autocomplete="username" required>
+      <label for="password">密码</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <div class="actions"><button type="submit">登录后台</button></div>
+    </form>
+    <div id="login-status" class="status"></div>
+  </section>
+
+  <section id="admin-panel" class="hidden">
+    <div class="panel">
+      <div class="row" style="align-items:center">
+        <div><h2 style="margin:0 0 5px">内容管理</h2><div id="whoami" class="sub"></div></div>
+        <div class="actions" style="margin:0;justify-content:flex-end">
+          <a href="./" style="font-size:13px;color:#244f78;align-self:center">查看公开首页 ↗</a>
+          <button id="logout" class="secondary" type="button">退出登录</button>
+        </div>
+      </div>
+      <div id="admin-status" class="status"></div>
+    </div>
+
+    <div class="panel">
+      <h2>选择管理类别</h2>
+      <div class="tabs" id="tabs">
+        <button type="button" data-type="countries" class="active">国家市场</button>
+        <button type="button" data-type="industries">产业领域</button>
+        <button type="button" data-type="demos">研究看板</button>
+        <button type="button" data-type="topics">专题研究</button>
+      </div>
+      <div class="notice">新增或编辑内容后点击保存。取消“公开发布”后，该条目不会出现在公开首页。删除操作不可撤销；国家或产业若仍被看板引用，需要先调整关联关系。</div>
+      <h3 id="form-title">新增国家市场</h3>
+      <form id="record-form">
+        <input id="record-id" type="hidden">
+        <label for="name">名称 *</label>
+        <input id="name" required maxlength="160" placeholder="例如：埃及">
+        
+        <div id="country-fields">
+          <div class="row">
+            <div><label for="code">国家代码</label><input id="code" maxlength="10" placeholder="例如：EG"></div>
+            <div><label for="cover_url">封面图片网址（选填）</label><input id="cover_url" type="url" placeholder="https://..."></div>
+          </div>
+        </div>
+
+        <div id="industry-fields" class="hidden">
+          <label for="category">产业分类</label><input id="category" placeholder="例如：新能源">
+        </div>
+
+        <div id="demo-fields" class="hidden">
+          <div class="row">
+            <div><label for="country_id">关联国家</label><select id="country_id"><option value="">请选择国家</option></select></div>
+            <div><label for="industry_id">关联产业</label><select id="industry_id"><option value="">请选择产业</option></select></div>
+          </div>
+          <label for="page_url">看板网址 *</label><input id="page_url" type="url" placeholder="https://..." >
+        </div>
+
+        <div id="topic-fields" class="hidden">
+          <label for="topic_url">专题网址 *</label><input id="topic_url" type="url" placeholder="https://...">
+        </div>
+
+        <label for="description">简介</label>
+        <textarea id="description" maxlength="1000" placeholder="简要说明内容与价值"></textarea>
+        <div class="row">
+          <div><label for="sort_order">排序（数字越小越靠前）</label><input id="sort_order" type="number" value="1"></div>
+          <div><label for="is_published">发布状态</label><select id="is_published"><option value="true">公开发布</option><option value="false">暂不公开</option></select></div>
+        </div>
+        <div class="actions">
+          <button id="save-button" type="submit">保存内容</button>
+          <button id="reset-button" type="button" class="secondary">清空表单</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2 id="list-title">国家市场列表</h2>
+      <div id="record-list" class="list"></div>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://zlfedybzoxlvjbzpluuo.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Ys9qA2p-xcMMGGUPMbHbJw_6_HdzMkQ";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+const configs = {
+  countries:{label:"国家市场",table:"countries",fields:["name","code","description","cover_url","sort_order","is_published"]},
+  industries:{label:"产业领域",table:"industries",fields:["name","category","description","sort_order","is_published"]},
+  demos:{label:"研究看板",table:"demos",fields:["name","country_id","industry_id","description","page_url","sort_order","is_published"]},
+  topics:{label:"专题研究",table:"topics",fields:["name","description","page_url","sort_order","is_published"]}
+};
+let currentType = "countries";
+let cache = {countries:[],industries:[],demos:[],topics:[]};
+
+const $ = id => document.getElementById(id);
+function escapeHtml(v){
+  return String(v ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function setStatus(id,msg){$(id).textContent=msg;}
+function setBusy(b){$("save-button").disabled=b;}
+function resetForm(){
+  $("record-form").reset();
+  $("record-id").value="";
+  $("sort_order").value="1";
+  $("is_published").value="true";
+  $("form-title").textContent="新增"+configs[currentType].label;
+  $("save-button").textContent="保存内容";
+  $("country_id").value="";
+  $("industry_id").value="";
+}
+function showType(type){
+  currentType=type;
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.type===type));
+  $("country-fields").classList.toggle("hidden",type!=="countries");
+  $("industry-fields").classList.toggle("hidden",type!=="industries");
+  $("demo-fields").classList.toggle("hidden",type!=="demos");
+  $("topic-fields").classList.toggle("hidden",type!=="topics");
+  $("code").required=false;
+  $("page_url").required=type==="demos";
+  $("topic_url").required=type==="topics";
+  $("form-title").textContent="新增"+configs[type].label;
+  $("list-title").textContent=configs[type].label+"列表";
+  resetForm();
+  renderList();
+}
+async function refreshData(){
+  const names=Object.keys(configs);
+  const results=await Promise.all(names.map(type=>db.from(configs[type].table).select("*").order("sort_order")));
+  const bad=results.find(r=>r.error);
+  if(bad) throw bad.error;
+  names.forEach((type,i)=>cache[type]=results[i].data||[]);
+  fillSelects();
+  renderList();
+}
+function fillSelects(){
+  $("country_id").innerHTML='<option value="">请选择国家</option>'+cache.countries.map(r=>`<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}</option>`).join("");
+  $("industry_id").innerHTML='<option value="">请选择产业</option>'+cache.industries.map(r=>`<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}</option>`).join("");
+}
+function relatedText(type,r){
+  if(type==="demos"){
+    const c=cache.countries.find(x=>x.id===r.country_id);
+    const i=cache.industries.find(x=>x.id===r.industry_id);
+    return [c?.name,i?.name].filter(Boolean).join(" · ");
+  }
+  return "";
+}
+function renderList(){
+  const rows=cache[currentType]||[];
+  $("record-list").innerHTML=rows.length?rows.map(r=>{
+    const related=relatedText(currentType,r);
+    const url=r.page_url||"";
+    return `<div class="item"><div><div class="item-title">${escapeHtml(r.name)} ${r.is_published===false?'<span style="color:#a33a3a;font-size:12px">（未发布）</span>':''}</div><div class="item-desc">${escapeHtml(related?related+" · ":"")}${escapeHtml(r.description||"")}${url?"<br>"+escapeHtml(url):""}</div></div><div class="item-actions"><button type="button" class="secondary" data-edit="${escapeHtml(r.id)}">编辑</button><button type="button" class="danger" data-delete="${escapeHtml(r.id)}">删除</button></div></div>`;
+  }).join(""):'<div class="status">暂无记录，可以在上方新增。</div>';
+}
+function editRecord(id){
+  const r=cache[currentType].find(x=>x.id===id);if(!r)return;
+  resetForm();
+  $("record-id").value=r.id;
+  $("name").value=r.name||"";
+  $("description").value=r.description||"";
+  $("sort_order").value=r.sort_order??1;
+  $("is_published").value=String(r.is_published!==false);
+  $("code").value=r.code||"";
+  $("cover_url").value=r.cover_url||"";
+  $("category").value=r.category||"";
+  $("country_id").value=r.country_id||"";
+  $("industry_id").value=r.industry_id||"";
+  if(currentType==="demos")$("page_url").value=r.page_url||"";
+  if(currentType==="topics")$("topic_url").value=r.page_url||"";
+  $("form-title").textContent="编辑"+configs[currentType].label;
+  $("save-button").textContent="保存修改";
+  $("record-form").scrollIntoView({behavior:"smooth",block:"start"});
+}
+async function saveRecord(event){
+  event.preventDefault();
+  setBusy(true);setStatus("admin-status","正在保存……");
+  try{
+    const type=currentType;
+    const r={
+      name:$("name").value.trim(),
+      description:$("description").value.trim(),
+      sort_order:Number($("sort_order").value)||0,
+      is_published:$("is_published").value==="true"
+    };
+    if(type==="countries"){
+      r.code=$("code").value.trim()||null;
+      r.cover_url=$("cover_url").value.trim();
+    }
+    if(type==="industries")r.category=$("category").value.trim();
+    if(type==="demos"){
+      r.country_id=$("country_id").value||null;
+      r.industry_id=$("industry_id").value||null;
+      r.page_url=$("page_url").value.trim();
+      if(!r.page_url)throw new Error("请填写看板网址");
+    }
+    if(type==="topics"){
+      r.page_url=$("topic_url").value.trim();
+      if(!r.page_url)throw new Error("请填写专题网址");
+    }
+    const id=$("record-id").value;
+    const result=id
+      ? await db.from(configs[type].table).update(r).eq("id",id)
+      : await db.from(configs[type].table).insert(r);
+    if(result.error)throw result.error;
+    resetForm();await refreshData();
+    setStatus("admin-status","保存成功，公开首页将读取最新数据。");
+  }catch(e){setStatus("admin-status","保存失败："+(e.message||String(e)));}
+  finally{setBusy(false);}
+}
+async function deleteRecord(id){
+  const r=cache[currentType].find(x=>x.id===id);
+  if(!r||!confirm(`确定删除“${r.name}”吗？此操作不可撤销。`))return;
+  setStatus("admin-status","正在删除……");
+  const result=await db.from(configs[currentType].table).delete().eq("id",id);
+  if(result.error){setStatus("admin-status","删除失败："+result.error.message);return;}
+  try{await refreshData();setStatus("admin-status","删除成功。");}
+  catch(e){setStatus("admin-status","删除完成，但刷新列表失败："+e.message);}
+}
+$("login-form").addEventListener("submit",async e=>{
+  e.preventDefault();setStatus("login-status","正在登录……");
+  const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+  if(error){setStatus("login-status","登录失败："+error.message);return;}
+  await enterAdmin(data.user);
+});
+async function enterAdmin(user){
+  $("login-panel").classList.add("hidden");
+  $("admin-panel").classList.remove("hidden");
+  $("whoami").textContent="已登录："+user.email;
+  setStatus("admin-status","正在检查管理员权限并加载数据……");
+  try{
+    const {data,error}=await db.from("countries").select("id").limit(1);
+    if(error)throw error;
+    const {data:admin,error:adminError}=await db.rpc("is_admin");
+    if(adminError)throw adminError;
+    if(!admin)throw new Error("当前账号没有管理员权限，请检查 Supabase admin_users 配置。");
+    await refreshData();
+    setStatus("admin-status","管理员验证成功。可以开始管理内容。");
+  }catch(e){
+    setStatus("admin-status","后台加载失败："+(e.message||String(e))+"\n请确认该账号已加入 admin_users，且数据库权限策略配置正确。");
+  }
+}
+$("logout").addEventListener("click",async()=>{
+  await db.auth.signOut();
+  $("admin-panel").classList.add("hidden");$("login-panel").classList.remove("hidden");
+  setStatus("login-status","已退出登录。");
+});
+$("tabs").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-type]");if(b)showType(b.dataset.type);
+});
+$("record-list").addEventListener("click",e=>{
+  const edit=e.target.closest("button[data-edit]");
+  const del=e.target.closest("button[data-delete]");
+  if(edit)editRecord(edit.dataset.edit);
+  if(del)deleteRecord(del.dataset.delete);
+});
+$("record-form").addEventListener("submit",saveRecord);
+$("reset-button").addEventListener("click",resetForm);
+showType("countries");
+(async()=>{
+  const {data:{session}}=await db.auth.getSession();
+  if(session?.user)await enterAdmin(session.user);
+})();
+</script>
+</body>
+</html>
