@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>甲子申｜埃及新能源产业动态看板｜2026.10.08</title>
+<style>
+:root{
+  --navy:#123d68;
+  --blue:#17649a;
+  --teal:#148b82;
+  --green:#2b9b75;
+  --light:#f4f8fb;
+  --line:#d8e5ee;
+  --line-2:#e9f0f4;
+  --text:#183247;
+  --muted:#6c7d89;
+  --faint:#9aabb6;
+  --red:#e94b4b;
+  --orange:#ed9a2f;
+  --white:#fff;
+  --th:#176f72;
+  --mono:ui-monospace,"SFMono-Regular","SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;background:#e9eff3;color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",Arial,sans-serif;
+  font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+a{color:inherit}
+.page{max-width:1180px;margin:28px auto;background:#fff;box-shadow:0 8px 30px rgba(22,55,75,.12)}
+section[id]{scroll-margin-top:16px}
+
+/* ================= HERO ================= */
+.hero{height:222px;position:relative;overflow:hidden;background:linear-gradient(105deg,#eef7fa,#d8edf4 58%,#c7e1ea)}
+.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.94) 0%,rgba(255,255,255,.80) 48%,rgba(255,255,255,.14) 100%)}
+.solar-deco{
+  position:absolute;right:-20px;bottom:-5px;width:610px;height:150px;transform:skewX(-14deg);
+  background:
+    repeating-linear-gradient(90deg,#245c76 0 4px,#a9d0dc 4px 7px),
+    repeating-linear-gradient(0deg,transparent 0 25px,rgba(255,255,255,.6) 25px 27px);
+  opacity:.55;
+}
+.hero-content{position:relative;z-index:2;padding:22px 42px}
+.brandline{font-size:14px;font-weight:800;color:var(--navy);letter-spacing:1px;margin-bottom:10px}
+.kicker{display:inline-block;background:var(--blue);color:#fff;padding:6px 16px;border-radius:4px;font-size:14px;font-weight:700;letter-spacing:1px}
+.hero h1{margin:12px 0 8px;font-size:36px;line-height:1.14;color:var(--navy);letter-spacing:.5px}
+.hero .subtitle{font-size:14.5px;line-height:1.5;color:#4d687b;max-width:720px;margin:0}
+.date-block{
+  position:absolute;right:35px;top:29px;background:var(--navy);color:#fff;
+  padding:12px 18px;border-radius:4px;font-size:17px;font-weight:700;z-index:3;
+  text-align:right;line-height:1.35;letter-spacing:.5px;
+}
+.date-block small{display:block;font-size:11px;font-weight:400;opacity:.78;letter-spacing:.5px}
+
+/* ================= NAV ================= */
+.navbar{
+  display:flex;flex-wrap:wrap;gap:0;padding:0 30px;background:#fbfdfe;
+  border-bottom:1px solid var(--line);
+}
+.navbar a{
+  padding:11px 14px;font-size:13px;color:var(--muted);text-decoration:none;
+  border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap;
+}
+.navbar a:hover{color:var(--navy);border-bottom-color:var(--blue)}
+
+/* ================= CONTENT ================= */
+.content{padding:24px 30px 30px}
+
+/* ================= KPI ================= */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:26px}
+.kpi{border:1px solid var(--line);border-radius:7px;padding:15px 16px;background:#fbfdfe}
+.kpi .v{font-size:20px;font-weight:800;letter-spacing:-.3px;line-height:1.2}
+.kpi .v.solar{color:#c07a10}
+.kpi .v.storage{color:#1c7a58}
+.kpi .v.wind{color:var(--blue)}
+.kpi .v.ink{color:var(--navy)}
+.kpi .k{font-size:12.5px;color:var(--text);font-weight:700;margin-top:6px}
+.kpi .d{font-size:11.5px;color:var(--muted);margin-top:4px}
+
+/* ================= CORE CALL ================= */
+.core-call{
+  background:linear-gradient(100deg,#123d68,#17649a);
+  color:#fff;border-radius:7px;padding:20px 24px;margin-bottom:26px;
+  display:grid;grid-template-columns:200px minmax(0,1fr);gap:26px;align-items:center;
+}
+.core-call .tag{font-size:11px;letter-spacing:2px;color:#9fd0e8;font-weight:700}
+.core-call .ct{font-size:19px;font-weight:800;margin-top:6px;letter-spacing:.5px}
+.core-call ol{margin:0;padding-left:20px;display:grid;gap:7px}
+.core-call li{font-size:13.5px;line-height:1.6;color:#e3f0f7}
+
+/* ================= SECTION ================= */
+.section{margin-bottom:26px}
+.section-title{display:flex;align-items:center;margin-bottom:12px}
+.num{
+  background:var(--blue);color:#fff;font-size:19px;font-weight:800;
+  padding:5px 12px;border-radius:5px 0 0 5px;letter-spacing:.5px;
+}
+.title{
+  font-size:20px;font-weight:800;color:var(--navy);
+  padding:4px 18px;background:linear-gradient(90deg,#e9f4f8,transparent);
+  flex:1;letter-spacing:.3px;
+}
+.sec-note{font-size:12px;color:var(--muted);white-space:nowrap;padding-left:12px}
+
+/* ================= PANEL ================= */
+.panel{border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#fff}
+.panel-pad{padding:18px 20px}
+.panel h3{margin:0 0 14px;font-size:15px;font-weight:800;color:var(--navy);letter-spacing:.2px}
+.panel h3.solar{color:#c07a10}
+.panel h3.storage{color:#1c7a58}
+.panel h3.wind{color:var(--blue)}
+
+.grid2{display:grid;grid-template-columns:1.08fr .92fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid2 + .grid3,.grid3 + .panel,.panel + .panel,.grid2 + .panel{margin-top:14px}
+.grid2 .panel,.grid3 .panel{padding:18px 20px}
+
+.muted{color:var(--muted);font-size:13px;margin:0;line-height:1.65}
+.panel p{margin:0 0 8px}
+.panel p:last-child{margin-bottom:0}
+
+/* ================= TABLE ================= */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{
+  background:var(--th);color:#fff;font-weight:700;padding:10px 9px;
+  border-right:1px solid rgba(255,255,255,.32);text-align:left;
+}
+td{padding:10px 9px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);vertical-align:middle;color:#2b4557}
+tr:nth-child(even) td{background:#f7fafc}
+td:last-child,th:last-child{border-right:0}
+tbody tr:last-child td{border-bottom:0}
+td strong{color:var(--navy);font-weight:700}
+.table-wrap{overflow-x:auto}
+
+/* ================= BADGE ================= */
+.badge{display:inline-block;padding:3px 8px;border-radius:10px;font-size:12px;font-weight:700;background:#edf5f8;color:#397084;white-space:nowrap}
+.badge.solar{background:#fdf3e3;color:#b77716}
+.badge.storage{background:#e8f6f0;color:#1c7a58}
+.badge.wind{background:#e8f1fb;color:#17649a}
+.badge.s{background:#e8f6f0;color:#1c7a58}
+.badge.a{background:#e8f1fb;color:#17649a}
+.badge.b{background:#fdf3e3;color:#b77716}
+.badge.plain{background:#eef3f7;color:#5b7488}
+
+/* ================= NEWS ROW ================= */
+.newsrow{
+  display:grid;grid-template-columns:78px 66px minmax(0,1fr) 176px;
+  gap:14px;padding:13px 18px;border-bottom:1px solid var(--line);align-items:start;
+}
+.newsrow:nth-child(even){background:#f7fafc}
+.newsrow:last-child{border-bottom:0}
+.newsrow .nd{font-family:var(--mono);font-size:12px;color:var(--muted);padding-top:2px}
+.newsrow .nc b{display:block;font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:3px}
+.newsrow .nc p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.6}
+.newsrow .ni{font-size:12px;color:#3d6379;border-left:3px solid var(--teal);padding-left:11px;line-height:1.55}
+
+/* ================= CHART ================= */
+.chart{border:1px solid var(--line);border-radius:7px;padding:14px 16px;background:#fbfdfe}
+.chart h3{margin:0 0 10px;font-size:14px;font-weight:800;color:var(--navy)}
+.chart svg{width:100%;height:auto;display:block}
+
+/* ================= BARS ================= */
+.bar{height:9px;background:#e6eef3;border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--blue);border-radius:2px}
+.mini-bars{display:grid;gap:12px}
+.mini-line{display:grid;grid-template-columns:98px minmax(0,1fr) 72px;gap:12px;align-items:center;font-size:12.5px}
+.mini-line b{text-align:right;font-size:11.5px;color:var(--muted);font-weight:700}
+
+/* ================= METRIC ================= */
+.metric{border-top:3px solid var(--line);padding-top:10px;margin-bottom:12px}
+.metric.solar{border-top-color:#ed9a2f}
+.metric.storage{border-top-color:var(--green)}
+.metric.wind{border-top-color:var(--blue)}
+.metric-v{font-family:var(--mono);font-size:23px;font-weight:800;letter-spacing:-.5px;line-height:1.2;color:var(--navy)}
+.metric.solar .metric-v{color:#c07a10}
+.metric.storage .metric-v{color:#1c7a58}
+.metric.wind .metric-v{color:var(--blue)}
+.metric-l{font-size:11.5px;color:var(--muted);margin-top:4px}
+
+/* ================= CALLOUT ================= */
+.callout{
+  padding:12px 15px;background:var(--light);border-left:4px solid var(--teal);
+  border-radius:0 4px 4px 0;font-size:13px;color:#526873;line-height:1.65;
+}
+.callout strong{color:var(--navy);font-weight:700}
+.callout.ok{border-left-color:var(--green);background:#f1faf6}
+.callout.warn{border-left-color:var(--orange);background:#fdf8ee}
+.callout.risk{border-left-color:var(--red);background:#fdf2f2}
+.callout + .callout{margin-top:10px}
+
+/* ================= STEPS ================= */
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.step{background:#fff;padding:15px 14px}
+.step b{display:block;font-size:11px;font-weight:800;color:var(--blue);letter-spacing:.5px;margin-bottom:6px}
+.step span{display:block;font-size:12.5px;color:#2b4557;line-height:1.55}
+
+/* ================= TIMELINE ================= */
+.timeline{display:grid}
+.event{display:grid;grid-template-columns:82px minmax(0,1fr);gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+.event:first-child{padding-top:0}
+.event:last-child{border-bottom:0;padding-bottom:0}
+.event .ed{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:2px}
+.event h4{margin:0 0 3px;font-size:13.5px;font-weight:700;color:var(--navy)}
+.event p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.6}
+
+/* ================= PROJECT ================= */
+.project{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
+.project:first-of-type{padding-top:0}
+.project:last-child{border-bottom:0;padding-bottom:0}
+.project b{display:block;font-size:13.5px;font-weight:700;color:var(--navy)}
+.project .loc{font-size:11.5px;color:var(--muted);margin-top:2px}
+.project .mw{font-family:var(--mono);font-size:18px;font-weight:800;letter-spacing:-.3px;white-space:nowrap;color:var(--blue)}
+.project .mw.solar{color:#c07a10}
+.project .mw.storage{color:#1c7a58}
+
+/* ================= MAP ================= */
+.mapbox{
+  position:relative;min-height:390px;border:1px solid var(--line);border-radius:7px;
+  overflow:hidden;background:#fbfdfe;
+}
+.mapbox::before{
+  content:"";position:absolute;inset:0;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:44px 44px;opacity:.55;
+}
+.mapbox::after{
+  content:"EGYPT";position:absolute;right:22px;bottom:14px;
+  font-family:var(--mono);font-size:48px;font-weight:800;letter-spacing:.16em;color:#eaf1f5;
+}
+.pin{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 4px rgba(23,100,154,.14);z-index:2}
+.pin::after{
+  content:attr(data-name);position:absolute;left:16px;top:-5px;white-space:nowrap;
+  font-size:11px;color:#2b4557;background:rgba(255,255,255,.88);padding:0 5px;border-radius:2px;
+}
+.pin.p1,.pin.p2{background:#ed9a2f;box-shadow:0 0 0 4px rgba(237,154,47,.16)}
+.pin.p3{background:var(--green);box-shadow:0 0 0 4px rgba(43,155,117,.16)}
+.p1{left:47%;top:56%}.p2{left:52%;top:63%}.p3{left:41%;top:40%}
+.p4{left:70%;top:31%}.p5{left:73%;top:38%}.p6{left:66%;top:46%}
+
+/* ================= TABS ================= */
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tabs button{
+  background:#f4f8fb;color:var(--muted);border:1px solid var(--line);
+  padding:8px 18px;border-radius:5px;cursor:pointer;font-size:13.5px;font-weight:700;
+  font-family:inherit;transition:all .15s;
+}
+.tabs button:hover{color:var(--navy);border-color:#b9d2e0}
+.tabs button.active{color:#fff;background:var(--blue);border-color:var(--blue)}
+.tab{display:none}
+.tab.active{display:block}
+
+/* ================= SOURCES ================= */
+.sources{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.source{background:#fff;padding:14px 16px}
+.source b{display:block;font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.source span{display:block;font-size:11.5px;color:var(--muted);margin-bottom:7px;line-height:1.5}
+.source a{font-size:11.5px;color:var(--blue);text-decoration:none;word-break:break-all;font-family:var(--mono)}
+.source a:hover{text-decoration:underline}
+
+/* ================= AVOID ================= */
+.avoid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.avoid .panel{padding:18px 20px;border-left:4px solid var(--red)}
+.avoid h3{margin:0 0 8px;font-size:14px;font-weight:800;color:var(--red)}
+
+/* ================= FOOTER ================= */
+.footer{background:var(--navy);color:#fff;padding:18px 30px;display:grid;grid-template-columns:1fr 1fr auto;gap:30px;font-size:12px;line-height:1.65}
+.footer b{display:block;font-size:12.5px;margin-bottom:4px;color:#9fd0e8;letter-spacing:.5px}
+.footer .fr{text-align:right}
+.footer p{margin:0;color:#cfe1ec}
+
+/* ================= RESPONSIVE ================= */
+@media(max-width:1000px){
+  .page{margin:0;max-width:100%}
+  .hero{height:auto;padding-bottom:26px}
+  .hero-content{padding:22px 24px 0}
+  .hero h1{font-size:28px}
+  .date-block{position:static;display:inline-block;margin:18px 0 0 24px}
+  .navbar{padding:0 16px}
+  .content{padding:20px 24px 24px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .core-call{grid-template-columns:1fr;gap:14px}
+  .grid2{grid-template-columns:1fr}
+  .grid3,.sources,.avoid{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr 1fr}
+  .newsrow{grid-template-columns:72px 62px minmax(0,1fr)}
+  .newsrow .ni{grid-column:3;border-left:0;padding-left:0;color:var(--muted)}
+  .footer{grid-template-columns:1fr;gap:14px}
+  .footer .fr{text-align:left}
+}
+@media(max-width:640px){
+  .hero h1{font-size:23px}
+  .kpis{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .newsrow{grid-template-columns:64px minmax(0,1fr);gap:8px 12px}
+  .newsrow .badge{grid-column:1;grid-row:2}
+  .newsrow .nc{grid-column:2;grid-row:1/3}
+  .newsrow .ni{grid-column:2;grid-row:3}
+  .section-title{flex-wrap:wrap}
+  .title{font-size:17px}
+  .sec-note{white-space:normal;padding-left:0;width:100%;margin-top:4px}
+}
+@media print{
+  body{background:#fff}
+  .page{margin:0;max-width:100%;box-shadow:none}
+  .section{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ================= HERO ================= -->
+  <header class="hero">
+    <div class="solar-deco"></div>
+    <div class="date-block">2026.10.08<small>数据更新</small></div>
+    <div class="hero-content">
+      <div class="brandline">甲子申 · 报告帝 · 市场情报</div>
+      <div class="kicker">MENA · EGYPT · RENEWABLE ENERGY</div>
+      <h1>埃及新能源产业动态看板</h1>
+      <p class="subtitle">面向中国光伏、储能、风电企业的市场进入型情报看板：看项目、看政策、看贸易、看准入、看谁在买，以及下一步应该找谁。</p>
+    </div>
+  </header>
+
+  <!-- ================= NAV ================= -->
+  <nav class="navbar">
+    <a href="#pulse">最新动态</a>
+    <a href="#solar">光伏</a>
+    <a href="#storage">储能</a>
+    <a href="#wind">风电</a>
+    <a href="#trade">进出口</a>
+    <a href="#access">市场准入</a>
+    <a href="#projects">重点项目</a>
+    <a href="#events">展会</a>
+    <a href="#resources">落地资源</a>
+    <a href="#sources">来源核验</a>
+  </nav>
+
+  <main class="content">
+
+    <!-- ================= KPI ================= -->
+    <div class="kpis">
+      <div class="kpi">
+        <div class="v solar">优先</div>
+        <div class="k">光伏：进入大型 IPP / BOO 供应链</div>
+        <div class="d">不要先做泛渠道铺货</div>
+      </div>
+      <div class="kpi">
+        <div class="v storage">高增</div>
+        <div class="k">储能：重点盯电网级 BESS</div>
+        <div class="d">PCS / EMS / 系统集成机会更直接</div>
+      </div>
+      <div class="kpi">
+        <div class="v wind">项目型</div>
+        <div class="k">风电：Gulf of Suez 为核心战场</div>
+        <div class="d">EPC + 并网配套优先</div>
+      </div>
+      <div class="kpi">
+        <div class="v ink">先合规</div>
+        <div class="k">所有产品：GOEIC / ACI 前置</div>
+        <div class="d">先确认归类和进口路径，再报价</div>
+      </div>
+    </div>
+
+    <!-- ================= CORE CALL ================= -->
+    <div class="core-call">
+      <div>
+        <div class="tag">甲子申 · MARKET CALL</div>
+        <div class="ct">三条主线同时加速</div>
+      </div>
+      <ol>
+        <li>大型光伏持续落地，储能开始从配套走向电网资产。</li>
+        <li>Gulf of Suez 风电项目大型化，电网接入成为关键约束。</li>
+        <li>进口监管从“严检”转向“风险管理 + 合规便利”，GOEIC 成为前置环节。</li>
+      </ol>
+    </div>
+
+    <!-- ================= 01 最新动态 ================= -->
+    <section class="section" id="pulse">
+      <div class="section-title">
+        <span class="num">01</span>
+        <span class="title">最新变化｜企业现在该关注什么</span>
+        <span class="sec-note">只保留对企业决策有影响的变化</span>
+      </div>
+
+      <div class="panel">
+        <div class="newsrow">
+          <div class="nd">2026.09</div>
+          <div><span class="badge solar">政策</span></div>
+          <div class="nc">
+            <b>埃及新能源目标进一步加速：45% 可再生能源发电占比指向 2028</b>
+            <p>总统会议审议新能源战略，并强调扩大储能、提升本地制造。</p>
+          </div>
+          <div class="ni">影响：储能与本地化权重上升</div>
+        </div>
+        <div class="newsrow">
+          <div class="nd">2026.08</div>
+          <div><span class="badge solar">准入</span></div>
+          <div class="nc">
+            <b>GOEIC 第 32 号决议：对进口太阳能系统 / 产品优化检验</b>
+            <p>对注册生产商或具备认可检验 / 审核证明的货物提供便利，同时保留合规核验权。</p>
+          </div>
+          <div class="ni">影响：合规能力直接影响清关效率</div>
+        </div>
+        <div class="newsrow">
+          <div class="nd">2026.08</div>
+          <div><span class="badge storage">项目</span></div>
+          <div class="nc">
+            <b>Scatec：Obelisk 1.1GW 项目第二阶段达到商业运营</b>
+            <p>全项目含 100MW / 200MWh BESS；项目总容量 1.1GW PV。</p>
+          </div>
+          <div class="ni">影响：Solar + BESS 进入规模化交付</div>
+        </div>
+        <div class="newsrow">
+          <div class="nd">2026.01</div>
+          <div><span class="badge storage">融资</span></div>
+          <div class="nc">
+            <b>Abydos II：1GW 光伏 + 600MWh 储能进入融资 / 实施阶段</b>
+            <p>IFC 项目文件显示项目位于 Aswan，由 AMEA Power 开发。</p>
+          </div>
+          <div class="ni">影响：电网级 BESS 需求进入放量窗口</div>
+        </div>
+        <div class="newsrow">
+          <div class="nd">2025.07</div>
+          <div><span class="badge wind">风电</span></div>
+          <div class="nc">
+            <b>Red Sea Wind Energy 650MW 全部商业运营</b>
+            <p>Ras Ghareb；ENGIE 披露全容量并网。</p>
+          </div>
+          <div class="ni">影响：Gulf of Suez 持续成为风电核心区</div>
+        </div>
+      </div>
+
+      <div class="grid3" style="margin-top:14px">
+        <div class="panel">
+          <span class="badge s">ACTION 01</span>
+          <h3 style="margin-top:10px">如果你卖组件 / 逆变器</h3>
+          <p class="muted">优先锁定 Scatec、AMEA、ACWA 等开发商项目供应链及当地 EPC；同时让埃及进口商先确认 GOEIC 产品归类、生产商注册 / 认可检验证明与 ACI。</p>
+          <div class="callout ok"><strong>第一步：</strong>拿 HS Code + 产品规格书给当地清关 / 合规伙伴做预审。</div>
+        </div>
+        <div class="panel">
+          <span class="badge s">ACTION 02</span>
+          <h3 style="margin-top:10px">如果你卖储能</h3>
+          <p class="muted">不要把“埃及储能市场”理解成户储市场。当前最有确定性的需求来自大型 PV + BESS 及独立电网储能项目。</p>
+          <div class="callout ok"><strong>第一步：</strong>围绕 Abydos / Obelisk 等项目，找开发商、EPC、融资方，而不是先找零售商。</div>
+        </div>
+        <div class="panel">
+          <span class="badge s">ACTION 03</span>
+          <h3 style="margin-top:10px">如果你做风电 / 电气设备</h3>
+          <p class="muted">重点区域集中在 Gulf of Suez / Ras Ghareb。除了风机本体，输电、集电、变电、并网设备和 EPC 同样值得切入。</p>
+          <div class="callout ok"><strong>第一步：</strong>从项目业主 → EPC → 并网工程倒推供应商名录。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 02 光伏 ================= -->
+    <section class="section" id="solar">
+      <div class="section-title">
+        <span class="num">02</span>
+        <span class="title">光伏｜订单从哪里来</span>
+        <span class="sec-note">核心判断：大型集中式项目仍是主战场</span>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <h3 class="solar">市场结构</h3>
+          <div class="chart">
+            <svg viewBox="0 0 340 165" role="img" aria-label="埃及光伏市场结构">
+              <line x1="24" y1="132" x2="328" y2="132" stroke="#d8e5ee" stroke-width="1"/>
+              <line x1="24" y1="98"  x2="328" y2="98"  stroke="#eef4f7" stroke-width="1"/>
+              <line x1="24" y1="64"  x2="328" y2="64"  stroke="#eef4f7" stroke-width="1"/>
+              <line x1="24" y1="30"  x2="328" y2="30"  stroke="#eef4f7" stroke-width="1"/>
+              <rect x="52"  y="34" width="62" height="98" fill="#17649a" rx="2"/>
+              <rect x="146" y="124" width="62" height="8"  fill="#9fc4dd" rx="2"/>
+              <rect x="240" y="43" width="62" height="89" fill="#148b82" rx="2"/>
+              <text x="83"  y="24" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="700" fill="#123d68">2,667.5</text>
+              <text x="83"  y="150" text-anchor="middle" font-size="11.5" fill="#6c7d89">MW · PV</text>
+              <text x="177" y="116" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="700" fill="#123d68">246</text>
+              <text x="177" y="150" text-anchor="middle" font-size="11.5" fill="#6c7d89">NREA</text>
+              <text x="271" y="33" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="13" font-weight="700" fill="#123d68">2,421.5</text>
+              <text x="271" y="150" text-anchor="middle" font-size="11.5" fill="#6c7d89">Private</text>
+            </svg>
+          </div>
+          <div class="callout ok" style="margin-top:14px"><strong>对出海企业的意义：</strong>不要把“埃及光伏装机量”当销售线索。真正有价值的是<strong>正在开发 / 建设的 IPP、BOO 项目</strong>及其 EPC、采购包和本地进口商。</div>
+        </div>
+
+        <div class="panel">
+          <h3 class="solar">企业进入机会</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>方向</th><th>机会</th><th>门槛</th></tr></thead>
+              <tbody>
+                <tr><td>组件</td><td><strong>大项目采购</strong></td><td>GOEIC + EOS / IEC + 文件</td></tr>
+                <tr><td>逆变器</td><td><strong>项目配套</strong></td><td>产品合规</td></tr>
+                <tr><td>EPC</td><td><strong>项目合作</strong></td><td>本地伙伴 / 项目资历</td></tr>
+                <tr><td>跟踪支架 / 电气</td><td><strong>供应链机会</strong></td><td>项目技术规范</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid3" style="margin-top:14px">
+        <div class="panel">
+          <h3 class="solar">Benban Solar Park</h3>
+          <div class="project">
+            <div><b>约 1.8GW</b><div class="loc">Aswan · 大型光伏集群</div></div>
+            <span class="badge s">成熟集群</span>
+          </div>
+          <p class="muted">埃及最具代表性的集中式光伏基地之一，项目开发商 / IPP 生态成熟。</p>
+        </div>
+        <div class="panel">
+          <h3 class="solar">Obelisk</h3>
+          <div class="project">
+            <div><b>1.1GW PV + 200MWh</b><div class="loc">Upper Egypt · EETC PPA</div></div>
+            <span class="badge s">COD</span>
+          </div>
+          <p class="muted">Scatec 于 2026 年 8 月宣布第二阶段商业运营；全项目 25 年供电。</p>
+        </div>
+        <div class="panel">
+          <h3 class="solar">Abydos II</h3>
+          <div class="project">
+            <div><b>1GW PV + 600MWh</b><div class="loc">Aswan · AMEA Power</div></div>
+            <span class="badge a">融资 / 实施</span>
+          </div>
+          <p class="muted">IFC 项目文件确认规模；属于埃及大型 Solar + BESS 标志性项目。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 03 储能 ================= -->
+    <section class="section" id="storage">
+      <div class="section-title">
+        <span class="num">03</span>
+        <span class="title">储能｜确定性需求在哪里</span>
+        <span class="sec-note">核心判断：从“光伏配套”向“电网级资产”跃迁</span>
+      </div>
+
+      <div class="grid3">
+        <div class="panel">
+          <h3 class="storage">Abydos I / Obelisk</h3>
+          <div class="metric storage">
+            <div class="metric-v">200 MWh</div>
+            <div class="metric-l">100MW / 200MWh BESS</div>
+          </div>
+          <p class="muted">与 561MW 首期光伏协同，Scatec 已于 2026 年 2 月宣布首期 COD。</p>
+        </div>
+        <div class="panel">
+          <h3 class="storage">Abydos II</h3>
+          <div class="metric storage">
+            <div class="metric-v">600 MWh</div>
+            <div class="metric-l">1GW PV + 600MWh BESS</div>
+          </div>
+          <p class="muted">IFC：埃及大型光伏 + BESS 项目，位于 Aswan。</p>
+        </div>
+        <div class="panel">
+          <h3 class="storage">国家规划信号</h3>
+          <div class="metric storage">
+            <div class="metric-v">3.35 GW</div>
+            <div class="metric-l">NREA 披露的 2026 年底储能规划目标</div>
+          </div>
+          <p class="muted">储能已经进入国家电力系统规划，而不是单纯设备附属品。</p>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <h3 class="storage">储能机会矩阵</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>赛道</th><th>成熟度</th><th>中国企业机会</th><th>建议切入方式</th></tr></thead>
+            <tbody>
+              <tr><td>电网级 BESS</td><td><span class="badge s">快速启动</span></td><td>电芯、PCS、EMS、系统集成</td><td>跟开发商 / EPC / 融资方</td></tr>
+              <tr><td>光储一体化</td><td><span class="badge s">已落地</span></td><td>整套系统</td><td>绑定大型 PV 项目</td></tr>
+              <tr><td>独立储能</td><td><span class="badge a">起步</span></td><td>PCS / EMS / 调度方案</td><td>关注 EETC 采购机制</td></tr>
+              <tr><td>本地制造</td><td><span class="badge a">政策鼓励</span></td><td>电池 / 组件 / 电气设备</td><td>研究 GAFI 激励 + 本地伙伴</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 04 风电 ================= -->
+    <section class="section" id="wind">
+      <div class="section-title">
+        <span class="num">04</span>
+        <span class="title">风电｜项目与供应链怎么切</span>
+        <span class="sec-note">核心判断：项目大型化 + Gulf of Suez 集中化 + 电网约束</span>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <h3 class="wind">累计装机与资源区</h3>
+          <div class="metric wind">
+            <div class="metric-v">3,022 MW</div>
+            <div class="metric-l">2025 年中风电累计装机（附件底稿 NREA 口径）</div>
+          </div>
+          <div class="mini-bars">
+            <div class="mini-line"><span>Gulf of Suez</span><div class="bar"><i style="width:92%"></i></div><b>核心</b></div>
+            <div class="mini-line"><span>Ras Ghareb</span><div class="bar"><i style="width:86%"></i></div><b>项目密集</b></div>
+            <div class="mini-line"><span>Upper Egypt</span><div class="bar"><i style="width:42%"></i></div><b>潜力</b></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3 class="wind">项目梯队</h3>
+          <div class="project">
+            <div><b>Red Sea Wind Energy</b><div class="loc">Ras Ghareb · ENGIE 等</div></div>
+            <div class="mw">650MW</div>
+          </div>
+          <div class="project">
+            <div><b>Amunet Wind</b><div class="loc">Ras Ghareb · 77 × 6.5MW</div></div>
+            <div class="mw">500MW</div>
+          </div>
+          <div class="project">
+            <div><b>Suez Wind</b><div class="loc">Gulf of Suez · ACWA / Hassan Allam</div></div>
+            <div class="mw">1.1GW</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout risk" style="margin-top:14px">
+        <strong>产业判断：</strong>随着大型风电项目持续并网，新增瓶颈正在从“有没有资源 / 项目”向“电网能否及时消纳和接入”迁移。中国企业机会不只在风机，也包括 EPC、输变电、集电线路、变流器及电网配套。
+      </div>
+    </section>
+
+    <!-- ================= 05 贸易 ================= -->
+    <section class="section" id="trade">
+      <div class="section-title">
+        <span class="num">05</span>
+        <span class="title">贸易｜中国企业实际卖进去多少</span>
+        <span class="sec-note">严格标注 HS 口径 · 不把海关代理指标当市场规模</span>
+      </div>
+
+      <div class="tabs">
+        <button class="active" onclick="tab('pv',this)">光伏</button>
+        <button onclick="tab('bat',this)">储能</button>
+        <button onclick="tab('windt',this)">风电</button>
+      </div>
+
+      <div id="pv" class="tab active">
+        <div class="panel">
+          <div class="panel-pad">
+            <h3>HS 854140 · 2024</h3>
+            <div class="grid3">
+              <div class="metric">
+                <div class="metric-v">$192.56M</div>
+                <div class="metric-l">埃及进口额 · WITS / UN Comtrade</div>
+              </div>
+              <div class="metric solar">
+                <div class="metric-v">89.7%</div>
+                <div class="metric-l">中国按进口额估算占比 · 172.79 / 192.56</div>
+              </div>
+              <div class="metric">
+                <div class="metric-v">$172.79M</div>
+                <div class="metric-l">中国对埃及出口 · 2024 · 119.64M items</div>
+              </div>
+            </div>
+            <div class="callout warn" style="margin-top:16px"><strong>口径警告：</strong>HS 854140 为较旧 HS 口径的“光敏半导体器件 / 光伏”分类。2022 年后 HS 体系存在 854143 等细分变化，因此不同 HS 版本不能直接拼接为一条时间序列。该看板将其作为历史贸易代理指标，而非“组件市场规模”。</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="bat" class="tab">
+        <div class="panel">
+          <div class="panel-pad">
+            <h3>HS 850780 · 2024</h3>
+            <div class="grid3">
+              <div class="metric">
+                <div class="metric-v">$102.40M</div>
+                <div class="metric-l">埃及进口额 · WITS / UN Comtrade</div>
+              </div>
+              <div class="metric storage">
+                <div class="metric-v">$47.64M</div>
+                <div class="metric-l">中国来源 · 约 46.5% 按进口额计算</div>
+              </div>
+              <div class="metric">
+                <div class="metric-v">$42.32M</div>
+                <div class="metric-l">德国来源 · 约 41.3%</div>
+              </div>
+            </div>
+            <div class="callout warn" style="margin-top:16px"><strong>口径警告：</strong>850780 为“其他蓄电池”，不能等同于电网级 BESS。若做企业市场容量估算，应另行跟踪 850760 及系统级设备 / 项目招标数据。</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="windt" class="tab">
+        <div class="panel">
+          <div class="panel-pad">
+            <h3>HS 850231 · 风力发电机组</h3>
+            <div class="callout"><strong>本版不强行填充金额。</strong>当前公开检索结果不足以对 2024 埃及 850231 做同等级别的双向核验，因此不把附件中的第三方整理金额升级为“已验证核心 KPI”。建议后续接入 WITS / UN Comtrade API 后自动刷新。</div>
+            <div class="table-wrap" style="margin-top:16px">
+              <table>
+                <thead><tr><th>建议监测</th><th>用途</th></tr></thead>
+                <tbody>
+                  <tr><td>850231</td><td>Wind-powered generating sets</td></tr>
+                  <tr><td>850300</td><td>电机 / 发电机及其零部件代理指标</td></tr>
+                  <tr><td>项目采购数据</td><td>比单纯海关 HS 更接近真实风电市场</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 06 准入 ================= -->
+    <section class="section" id="access">
+      <div class="section-title">
+        <span class="num">06</span>
+        <span class="title">准入｜最容易卡在哪里</span>
+        <span class="sec-note">产品、进口商、GOEIC、NAFEZA、项目技术规范需串起来</span>
+      </div>
+
+      <div class="steps">
+        <div class="step"><b>01 · 产品</b><span>确认 HS Code 及产品归类</span></div>
+        <div class="step"><b>02 · 监管</b><span>判断是否属于特殊进口条件</span></div>
+        <div class="step"><b>03 · GOEIC</b><span>生产商注册 / 检验 / 审核文件</span></div>
+        <div class="step"><b>04 · 标准</b><span>EOS + IEC + 项目技术规范</span></div>
+        <div class="step"><b>05 · 清关</b><span>NAFEZA / ACI / ACID / 文件</span></div>
+      </div>
+
+      <div class="grid2" style="margin-top:14px">
+        <div class="panel">
+          <h3>2026 年最新 GOEIC 变化</h3>
+          <div class="timeline">
+            <div class="event">
+              <div class="ed">2025</div>
+              <div>
+                <h4>部长令 486</h4>
+                <p>将太阳能系统及产品纳入特殊进口条件监管范围。</p>
+              </div>
+            </div>
+            <div class="event">
+              <div class="ed">2026.08</div>
+              <div>
+                <h4>部长令 32</h4>
+                <p>对合规产品优化检验流程；注册生产商或具认可检验 / 审核证明的货物可获得便利，同时保留持续合规核验。</p>
+              </div>
+            </div>
+            <div class="event">
+              <div class="ed">持续</div>
+              <div>
+                <h4>重点监管产品</h4>
+                <p>PV 系统、太阳能板、逆变器、太阳能电池、太阳能热系统及相关组件等。</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>ACI / ACID</h3>
+          <p class="muted">NAFEZA 官方说明：ACI 要求进口货物在装运前提交货物数据 / 文件，以进行风险管理；常见文件包括商业发票、装箱单、提单副本、原产地证，视货物可能追加检验、分析、保险、MSDS 等文件。</p>
+          <div class="callout ok"><strong>企业动作：</strong>不要等货到港再补合规。应在报价 / 签约阶段就让埃及进口商和清关代理确认 ACID、GOEIC、产品证书及项目文件链。</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <h3>标准与本地化</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>领域</th><th>已核验信息</th><th>企业含义</th></tr></thead>
+            <tbody>
+              <tr><td>PV 组件</td><td>EOS 4370-1/2025，参考 IEC 61215-1；当前页面标注“非强制”</td><td>不要把“参考标准”误写成“强制认证”</td></tr>
+              <tr><td>投资激励</td><td>GAFI：太阳能电池 / 组件、风机部件、锂 / 热 / 氢电池等存在特殊激励范围</td><td>埃及政策不仅欢迎进口，也明显推动本地制造</td></tr>
+              <tr><td>进口合规</td><td>GOEIC 486/2025 + 32/2026</td><td>合规供应链能力成为竞争壁垒</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 07 项目 ================= -->
+    <section class="section" id="projects">
+      <div class="section-title">
+        <span class="num">07</span>
+        <span class="title">项目｜直接盯哪些项目</span>
+        <span class="sec-note">项目在哪里，比“市场很大”更有用</span>
+      </div>
+
+      <div class="grid2">
+        <div class="mapbox">
+          <span class="pin p1" data-name="Benban PV"></span>
+          <span class="pin p2" data-name="Abydos II"></span>
+          <span class="pin p3" data-name="Obelisk"></span>
+          <span class="pin p4" data-name="Amunet"></span>
+          <span class="pin p5" data-name="Red Sea Wind"></span>
+          <span class="pin p6" data-name="Suez Wind"></span>
+        </div>
+        <div class="panel">
+          <h3>重点项目清单</h3>
+          <div class="project">
+            <div><b>Benban Solar Park</b><div class="loc">Aswan · 光伏集群</div></div>
+            <span class="badge solar">PV</span>
+          </div>
+          <div class="project">
+            <div><b>Abydos II</b><div class="loc">Aswan · AMEA Power</div></div>
+            <span class="badge storage">1GW + 600MWh</span>
+          </div>
+          <div class="project">
+            <div><b>Obelisk</b><div class="loc">Upper Egypt · Scatec / EETC</div></div>
+            <span class="badge storage">1.1GW + 200MWh</span>
+          </div>
+          <div class="project">
+            <div><b>Amunet</b><div class="loc">Ras Ghareb · PowerChina EPC</div></div>
+            <span class="badge wind">500MW</span>
+          </div>
+          <div class="project">
+            <div><b>Red Sea Wind Energy</b><div class="loc">Ras Ghareb · ENGIE 等</div></div>
+            <span class="badge wind">650MW</span>
+          </div>
+          <div class="project">
+            <div><b>Suez Wind</b><div class="loc">Gulf of Suez · ACWA / Hassan Allam</div></div>
+            <span class="badge wind">1.1GW</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 08 展会 ================= -->
+    <section class="section" id="events">
+      <div class="section-title">
+        <span class="num">08</span>
+        <span class="title">展会｜去哪里找客户</span>
+        <span class="sec-note">用于获客、找伙伴、看项目</span>
+      </div>
+
+      <div class="grid3">
+        <div class="panel">
+          <span class="badge solar">NEXT · 6 DAYS</span>
+          <h3 style="margin-top:10px">Egypt Energy 2026</h3>
+          <div class="metric solar">
+            <div class="metric-v">10.12–10.14</div>
+            <div class="metric-l">2026 · Cairo</div>
+          </div>
+          <p class="muted">Egypt International Exhibition Center。官方页面显示 200+ exhibitors、12,000+ global audience，覆盖储能、EMS、输配电、太阳能等。</p>
+          <p style="margin-top:10px"><a class="badge plain" href="https://www.egypt-energy.com/en/home.html" target="_blank" style="text-decoration:none">官方信息 ↗</a></p>
+        </div>
+        <div class="panel">
+          <span class="badge a">NEXT · 2027</span>
+          <h3 style="margin-top:10px">Egypt Energy Show 2027</h3>
+          <div class="metric wind">
+            <div class="metric-v">03.30–04.01</div>
+            <div class="metric-l">2027 · Cairo</div>
+          </div>
+          <p class="muted">覆盖 power &amp; utilities、renewables、transmission、distribution、storage 等；官方站当前显示 2027 日期。</p>
+          <p style="margin-top:10px"><a class="badge plain" href="https://www.egypes.com/" target="_blank" style="text-decoration:none">官方信息 ↗</a></p>
+        </div>
+        <div class="panel">
+          <span class="badge s">NEXT · 2027</span>
+          <h3 style="margin-top:10px">Solar &amp; Storage Live Egypt</h3>
+          <div class="metric storage">
+            <div class="metric-v">04.18–04.19</div>
+            <div class="metric-l">2027 · New Cairo</div>
+          </div>
+          <p class="muted">聚焦太阳能、储能、智能能源；官方活动页显示地点为 Egypt International Exhibition Center。</p>
+          <p style="margin-top:10px"><a class="badge plain" href="https://solarandstoragelive.com/" target="_blank" style="text-decoration:none">官方信息 ↗</a></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 09 买方链 ================= -->
+    <section class="section">
+      <div class="section-title">
+        <span class="num">09</span>
+        <span class="title">买方链｜真正应该找谁</span>
+        <span class="sec-note">把“谁在做项目”转化成“我该找谁”</span>
+      </div>
+
+      <div class="grid3">
+        <div class="panel">
+          <h3 class="solar">光伏买方链</h3>
+          <p class="muted">开发商：Scatec / AMEA Power / ACWA / Masdar<br>EPC：PowerChina 等国际 EPC 及当地承包商<br>最终购电 / 并网：EETC</p>
+          <div class="callout">切入顺序：<strong>项目 → EPC → 采购包 → 进口商</strong></div>
+        </div>
+        <div class="panel">
+          <h3 class="storage">储能买方链</h3>
+          <p class="muted">项目开发：Scatec / AMEA Power<br>公共部门：EETC / NREA<br>融资：IFC / OPEC Fund 等</p>
+          <div class="callout">切入顺序：<strong>开发商 + EPC → PCS / EMS → 电芯 / Pack</strong></div>
+        </div>
+        <div class="panel">
+          <h3 class="wind">风电买方链</h3>
+          <p class="muted">业主：ACWA / Hassan Allam / ENGIE 等<br>EPC：PowerChina 等<br>并网：EETC 及电网工程体系</p>
+          <div class="callout">切入顺序：<strong>业主 → EPC → 电气 / 并网包</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 10 落地资源 ================= -->
+    <section class="section" id="resources">
+      <div class="section-title">
+        <span class="num">10</span>
+        <span class="title">落地资源｜当地合作伙伴与项目资源</span>
+        <span class="sec-note">公开信息核验 · 企业、项目与公共服务接口</span>
+      </div>
+
+      <div class="callout ok" style="margin-bottom:14px"><strong>使用说明：</strong>以下企业与机构均基于公开信息进行核验。企业名称、主营方向或项目关系可追溯至企业官网、政府 / 行业名录或项目文件；“公开信息已核验”不代表甲子申与该机构已经建立商务合作关系，实际合作条件以对方最新确认信息为准。</div>
+
+      <div class="grid2">
+        <div class="panel">
+          <h3>经销商 / 进口商</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>企业</th><th>公开信息</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td><strong>EGYPTA Group</strong></td><td>太阳能及储能产品分销；官网披露在埃及开展住宅、商业及工业市场业务，并披露 MUST 品牌合作。</td><td><span class="badge s">已核验</span></td></tr>
+                <tr><td><strong>ECSE Group</strong></td><td>新能源、储能及电力管理相关业务；公开信息披露其在埃及新能源市场开展产品与解决方案业务。</td><td><span class="badge s">已核验</span></td></tr>
+                <tr><td><strong>Power Capital</strong></td><td>行业目录公开信息显示其在埃及从事组件、逆变器、储能及安装相关业务。</td><td><span class="badge a">已核验</span></td></tr>
+                <tr><td><strong>Neo Energy Solutions</strong></td><td>公开资料披露其涉及逆变器及储能产品，并与 GoodWe 等品牌开展合作。</td><td><span class="badge a">已核验</span></td></tr>
+                <tr><td><strong>Power City</strong></td><td>行业目录公开信息显示其从事光伏组件、逆变器、储能等产品分销。</td><td><span class="badge a">已核验</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>EPC / 系统集成</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>企业</th><th>公开信息</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Onera Systems</strong></td><td>NREA 相关企业名录中可查询；公开信息显示其开展太阳能系统与工程服务。</td><td><span class="badge s">已核验</span></td></tr>
+                <tr><td><strong>Solarize Egypt</strong></td><td>NREA 相关企业名录中可查询，并有商业光伏项目公开记录。</td><td><span class="badge s">已核验</span></td></tr>
+                <tr><td><strong>Infinity For Solar Energy</strong></td><td>NREA 相关企业名录中可查询，并有大型光伏项目公开记录。</td><td><span class="badge s">已核验</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:14px">
+        <div class="panel">
+          <h3>项目开发商</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>企业</th><th>代表性项目 / 公开信息</th><th>状态</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Scatec</strong></td><td>埃及光伏、储能及风电项目开发；Obelisk 项目公开信息持续更新。</td><td><span class="badge s">已核验</span></td></tr>
+                <tr><td><strong>AMEA Power</strong></td><td>Abydos 项目开发商；公开项目文件披露 1GW 光伏 + 600MWh 储能等信息。</td><td><span class="badge s">已核验</span></td></tr>
+                <tr><td><strong>ACWA Power</strong></td><td>Kom Ombo 光伏项目开发；官方及埃及电力监管公开信息可交叉确认。</td><td><span class="badge s">已核验</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>本地服务与公共接口</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>机构</th><th>主要用途</th><th>属性</th></tr></thead>
+              <tbody>
+                <tr><td><strong>NREA</strong></td><td>新能源项目、企业资质及可再生能源相关公共信息。</td><td><span class="badge s">公共接口</span></td></tr>
+                <tr><td><strong>EgyptERA</strong></td><td>电力生产、输配电及相关许可信息。</td><td><span class="badge s">公共接口</span></td></tr>
+                <tr><td><strong>GOEIC</strong></td><td>进口产品检验、生产商及相关合规要求。</td><td><span class="badge s">公共接口</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="margin-top:14px"><strong>企业使用建议：</strong>对于具体项目，建议沿“项目开发商 → EPC / 系统集成商 → 经销商 / 进口商 → 本地服务机构”的链条核实实际采购与合作关系。公开名录适合作为市场进入线索，不能替代项目方、进口商或主管机构的正式确认。</div>
+    </section>
+
+    <!-- ================= 11 来源 ================= -->
+    <section class="section" id="sources">
+      <div class="section-title">
+        <span class="num">11</span>
+        <span class="title">来源｜每个结论能追溯到哪里</span>
+        <span class="sec-note">以官方 / 一手来源为主</span>
+      </div>
+
+      <div class="callout ok" style="margin-bottom:14px"><strong>核验规则：</strong>S 级 = 埃及政府 / NREA / GOEIC / NAFEZA / EOS / EETC 及项目公司官网；A 级 = IFC / OPEC Fund / WITS-UN Comtrade 等权威机构；B 级 = 行业 / 商业数据库。核心数字至少要求两个独立来源能够相互印证；若只能找到单一或口径冲突来源，则在页面明确标注。</div>
+
+      <div class="sources">
+        <div class="source"><b>S · NREA</b><span>埃及新能源与可再生能源局</span><a href="https://nrea.gov.eg/" target="_blank">nrea.gov.eg ↗</a></div>
+        <div class="source"><b>S · GOEIC</b><span>埃及进出口管制总局 · 2026 第 32 号决议</span><a href="https://www.goeic.gov.eg/en/media-center/news/1511" target="_blank">goeic.gov.eg ↗</a></div>
+        <div class="source"><b>S · NAFEZA</b><span>埃及统一贸易 / ACI 平台</span><a href="https://www.nafeza.gov.eg/en/pages/15" target="_blank">nafeza.gov.eg ↗</a></div>
+        <div class="source"><b>S · EOS</b><span>埃及标准与质量组织 · PV 4370-1/2025</span><a href="https://www.eos.org.eg/ar/standard/16328" target="_blank">eos.org.eg ↗</a></div>
+        <div class="source"><b>S · GAFI</b><span>投资与产业激励</span><a href="https://gafi.gov.eg/en/sector/37d3e45d-6b4d-46e8-98fa-791f2a46e495" target="_blank">gafi.gov.eg ↗</a></div>
+        <div class="source"><b>A · WITS / UN Comtrade</b><span>埃及 2024 贸易数据 · HS854140</span><a href="https://wits.worldbank.org/trade/comtrade/en/country/EGY/year/2024/tradeflow/Imports/partner/ALL/product/854140" target="_blank">WITS ↗</a></div>
+        <div class="source"><b>A · WITS / UN Comtrade</b><span>埃及 2024 贸易数据 · HS850780</span><a href="https://wits.worldbank.org/trade/comtrade/en/country/EGY/year/2024/tradeflow/Imports/partner/ALL/product/850780" target="_blank">WITS ↗</a></div>
+        <div class="source"><b>A · IFC</b><span>Abydos II 项目文件</span><a href="https://disclosures.ifc.org/project-detail/ESRS/50309/abydos-solar-ii" target="_blank">IFC ↗</a></div>
+        <div class="source"><b>A · OPEC Fund</b><span>Abydos II 融资信息</span><a href="https://opecfund.org/news-events/press-releases/2026/opec-fund-strengthens-clean-energy-development-and-energy-security-in-egypt" target="_blank">OPEC Fund ↗</a></div>
+        <div class="source"><b>S/A · Scatec</b><span>Obelisk 2026 COD</span><a href="https://www.scatec.com/en/commercial-operations-reached-for-the-final-phase-of-the-obelisk-project-in-egypt/" target="_blank">Scatec ↗</a></div>
+        <div class="source"><b>S/A · ENGIE</b><span>Red Sea Wind 650MW COD</span><a href="https://en.newsroom.engie.com/news/engie-announces-the-commissioning-in-egypt-of-the-largest-wind-farm-in-the-middle-east-and-africa-8a95d-314df.html" target="_blank">ENGIE ↗</a></div>
+        <div class="source"><b>S/A · POWERCHINA</b><span>Amunet 500MW · 77 turbines</span><a href="https://en.powerchina.cn/2025-01/20/c_828859.htm" target="_blank">POWERCHINA ↗</a></div>
+        <div class="source"><b>S · Egypt Energy</b><span>2026 展会官方页面</span><a href="https://www.egypt-energy.com/en/home.html" target="_blank">Egypt Energy ↗</a></div>
+        <div class="source"><b>S/A · Solar &amp; Storage Live</b><span>2027 展会官方页面</span><a href="https://solarandstoragelive.com/events/" target="_blank">Solar &amp; Storage Live ↗</a></div>
+        <div class="source"><b>S/A · Egypt Energy Show</b><span>2027 展会官方页面</span><a href="https://www.egypes.com/" target="_blank">Egypt Energy Show ↗</a></div>
+      </div>
+    </section>
+
+    <!-- ================= 12 避坑 ================= -->
+    <section class="section">
+      <div class="section-title">
+        <span class="num">12</span>
+        <span class="title">出海避坑清单</span>
+        <span class="sec-note">把最容易浪费销售资源的动作直接删掉</span>
+      </div>
+
+      <div class="avoid">
+        <div class="panel">
+          <h3>× 不要先做泛渠道招商</h3>
+          <p class="muted">当前大型项目集中度高。先找到项目和 EPC，再判断当地渠道价值。</p>
+        </div>
+        <div class="panel">
+          <h3>× 不要只拿 IEC 证书就报价</h3>
+          <p class="muted">GOEIC 特殊进口条件、生产商注册 / 认可检验证明、ACI / ACID 及项目技术规范是不同环节。</p>
+        </div>
+        <div class="panel">
+          <h3>× 不要把 HS 进口额当市场规模</h3>
+          <p class="muted">854140、850780 等只是贸易代理指标；项目市场容量应结合招标、PPA、项目设备包判断。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 13 市场判断 ================= -->
+    <section class="section">
+      <div class="section-title">
+        <span class="num">13</span>
+        <span class="title">甲子申｜市场判断</span>
+        <span class="sec-note">从“卖设备”到“进入项目体系”</span>
+      </div>
+
+      <div class="grid3">
+        <div class="panel">
+          <h3 class="solar">01 · 光伏</h3>
+          <p class="muted">埃及的主战场仍是大型集中式项目。中国企业若只做“组件价格竞争”，容易陷入同质化；更有价值的是进入开发商、EPC、EETC 项目采购体系。</p>
+        </div>
+        <div class="panel">
+          <h3 class="storage">02 · 储能</h3>
+          <p class="muted">这是三个赛道里最值得跟踪的增量。Abydos II、Obelisk 等项目证明 BESS 正在进入电网级项目；同时政策开始强调本地制造与电网稳定。</p>
+        </div>
+        <div class="panel">
+          <h3 class="wind">03 · 风电</h3>
+          <p class="muted">大型化和区域集中化非常明显。Gulf of Suez / Ras Ghareb 项目密集，未来竞争点会逐步从单机设备扩展到 EPC、并网与电网配套。</p>
+        </div>
+      </div>
+
+      <div class="callout risk" style="margin-top:14px">
+        <strong>一句话：</strong>埃及不是简单的“低价出口市场”。真正值得研究的是：<strong>谁拿项目 → 谁做 EPC → 谁采购设备 → 谁负责并网 → 谁是购电方 → 中国企业处在哪一层。</strong>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <div>
+      <b>数据来源</b>
+      <p>NREA｜GOEIC｜NAFEZA｜EOS｜GAFI｜IFC｜OPEC Fund｜WITS-UN Comtrade｜项目公司公开信息</p>
+    </div>
+    <div>
+      <b>数据说明</b>
+      <p>本页面只保留对中国出海企业有直接决策价值的信息。贸易数据、政策与展会均应在实际签约 / 报关 / 参展前再次向主管机构或项目方确认；尤其是 HS 归类、GOEIC 合规和项目采购条件。</p>
+    </div>
+    <div class="fr">
+      <b>甲子申</b>
+      <p>Egypt Renewable Energy<br>Market Intelligence</p>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+function tab(id, btn){
+  document.querySelectorAll('.tab').forEach(function(x){ x.classList.remove('active'); });
+  document.querySelectorAll('.tabs button').forEach(function(x){ x.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
