@@ -10,6 +10,23 @@
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}a{color:inherit;text-decoration:none}button,input{font:inherit}.shell{width:min(1160px,calc(100% - 44px));margin:auto}
 .site-header{background:var(--navy);color:#fff;position:relative;overflow:hidden}.site-header:after{content:"";position:absolute;width:470px;height:470px;border:1px solid rgba(139,182,176,.18);border-radius:50%;right:-100px;top:-260px;box-shadow:0 0 0 48px rgba(139,182,176,.035),0 0 0 96px rgba(139,182,176,.025);pointer-events:none}.nav{height:78px;display:flex;align-items:center;justify-content:space-between;gap:20px;border-bottom:1px solid rgba(255,255,255,.13);position:relative;z-index:1}.brand{display:flex;align-items:center;gap:12px;font-size:13px;letter-spacing:2px;font-weight:650}.brand-mark{width:34px;height:34px;border:1px solid rgba(197,164,106,.8);display:grid;place-items:center;color:#d7bd8b;font-family:Georgia,serif;font-size:18px}.nav-links{display:flex;align-items:center;gap:24px;font-size:13px;color:#d4dfe6}.nav-links a:hover{color:#fff}.admin-link{border:1px solid rgba(255,255,255,.28);padding:9px 13px;border-radius:3px}.hero{padding:70px 0 62px;display:grid;grid-template-columns:1.35fr .65fr;gap:52px;align-items:center;position:relative;z-index:1}.eyebrow{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#a8c7c3;display:flex;align-items:center;gap:10px}.eyebrow:before{content:"";width:26px;height:1px;background:var(--gold)}h1{font-size:clamp(34px,4.2vw,54px);line-height:1.22;letter-spacing:.5px;margin:20px 0 18px;font-weight:650}.hero-copy{font-size:15px;line-height:2;color:#c9d5dc;max-width:610px;margin:0}.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}.btn{display:inline-flex;align-items:center;gap:10px;padding:12px 17px;border-radius:3px;font-size:13px;font-weight:600;transition:.18s}.btn-primary{background:#d5bd8d;color:#142b3e}.btn-primary:hover{background:#e4d0a8;transform:translateY(-1px)}.btn-ghost{border:1px solid rgba(255,255,255,.28);color:#f5f7f8}.hero-note{border-left:1px solid rgba(197,164,106,.7);padding:12px 0 12px 25px}.hero-note .big{font-size:22px;line-height:1.5;font-family:Georgia,"Songti SC",serif;color:#f4ead5}.hero-note p{font-size:13px;line-height:1.9;color:#b8c7d0;margin:12px 0 0}.hero-foot{display:flex;gap:22px;flex-wrap:wrap;padding:0 0 28px;color:#b9c9d1;font-size:12px;position:relative;z-index:1}.hero-foot span{display:flex;align-items:center;gap:8px}.hero-foot i{display:block;width:5px;height:5px;border-radius:50%;background:var(--gold)}
 main{padding:44px 0 68px}.section{margin-top:40px}.section:first-child{margin-top:0}.section-heading{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:17px}.section-kicker{font-size:11px;letter-spacing:2px;color:var(--blue);font-weight:700;margin-bottom:8px}.section-heading h2{font-size:22px;margin:0;font-weight:650;letter-spacing:.2px}.section-heading p{font-size:13px;color:var(--muted);margin:8px 0 0;line-height:1.7}.count{font-size:12px;color:var(--muted);white-space:nowrap;padding-bottom:3px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.grid-topics,.grid-demos{grid-template-columns:repeat(2,minmax(0,1fr))}.item-card{background:var(--card);border:1px solid var(--line);min-height:178px;padding:22px;display:flex;flex-direction:column;position:relative;transition:transform .18s,border-color .18s,box-shadow .18s;overflow:hidden}.item-card:before{content:"";position:absolute;left:0;top:0;width:3px;height:0;background:var(--gold);transition:height .18s}.item-card:hover{transform:translateY(-3px);border-color:#b7c8c5;box-shadow:var(--shadow)}.item-card:hover:before{height:100%}.item-card.is-link{cursor:pointer}.card-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.tag{display:inline-flex;align-items:center;padding:5px 8px;background:#edf2ef;color:#476b68;font-size:11px;letter-spacing:.3px}.card-index{font-family:Georgia,serif;font-size:12px;color:#9aa4a3}.item-card h3{font-size:19px;font-weight:650;margin:18px 0 9px;line-height:1.4}.item-card p{font-size:13px;line-height:1.85;color:var(--muted);margin:0}.card-bottom{margin-top:auto;padding-top:18px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--blue)}.card-bottom .arrow{font-size:17px;color:#9a865f}.item-card.is-link .card-bottom{color:var(--blue)}.empty{grid-column:1/-1;padding:22px;background:rgba(255,255,255,.6);border:1px dashed #cfd5d1;color:var(--muted);font-size:13px}.status{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12px;margin-bottom:24px}.status-dot{width:7px;height:7px;background:#78a59b;border-radius:50%;box-shadow:0 0 0 4px rgba(120,165,155,.12)}.status.error .status-dot{background:#c36f59;box-shadow:0 0 0 4px rgba(195,111,89,.12)}.feature-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#dfe3de;border:1px solid #dfe3de;margin-top:44px}.feature{background:#eeeee8;padding:20px 22px}.feature strong{display:block;font-size:14px;margin-bottom:7px}.feature span{font-size:12px;line-height:1.8;color:var(--muted)}footer{background:#e9e9e2;border-top:1px solid #d9ddd6;padding:24px 0;color:#66747a;font-size:12px}.footer-inner{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}.footer-brand{font-weight:700;letter-spacing:1px;color:#304653}.footer-note{margin-top:8px;line-height:1.7}.footer-links{display:flex;gap:18px}.footer-links a:hover{color:var(--navy)}
+
+/* Dashboard discovery */
+.discovery-panel{background:#eeeee8;border:1px solid #dfe3de;padding:22px;margin:0 0 28px}
+.discovery-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}
+.search-wrap{display:flex;align-items:center;gap:10px;background:#fffefa;border:1px solid #d9dfda;padding:0 14px;min-height:48px}
+.search-wrap span{font-size:18px;color:#718087}.search-wrap input{width:100%;border:0;outline:0;background:transparent;color:var(--ink);font-size:14px;min-width:0}
+.filter-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+.filter-row select{width:100%;min-height:42px;border:1px solid #d9dfda;background:#fffefa;color:var(--ink);padding:0 11px;font-size:13px;border-radius:2px}
+.discovery-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:13px;color:var(--muted);font-size:12px}
+.reset-btn,.more-btn{border:1px solid #b9c8c3;background:transparent;color:var(--navy);padding:9px 13px;font-size:12px;cursor:pointer}
+.more-wrap{display:flex;justify-content:center;margin-top:20px}.more-btn{background:var(--navy);color:white;border-color:var(--navy);padding:12px 22px}.more-btn:disabled{opacity:.45;cursor:default}
+.result-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.result-tags span{font-size:11px;color:#496c69;background:#e8efeb;padding:4px 7px}
+.access-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;letter-spacing:.2px;padding:4px 7px;border:1px solid #d6c49e;color:#826a3e;background:#f7f0e2}
+.consult-cta{background:linear-gradient(135deg,#10263d,#193c58);color:#fff;padding:25px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;align-items:center}
+.consult-cta h3{margin:0 0 8px;font-size:20px}.consult-cta p{margin:0;color:#d4dfe6;font-size:13px;line-height:1.8}.consult-qr{width:112px;height:112px;object-fit:contain;background:white;padding:6px}.consult-qr-placeholder{width:112px;height:112px;background:#fff;color:#315b68;display:grid;place-items:center;text-align:center;font-size:12px}
+@media(max-width:760px){.discovery-panel{padding:15px}.discovery-top{grid-template-columns:1fr}.filter-row{grid-template-columns:1fr}.discovery-actions{align-items:flex-start}.consult-cta{grid-template-columns:1fr}.consult-qr,.consult-qr-placeholder{width:96px;height:96px}}
+
 @media(max-width:760px){.shell{width:min(100% - 32px,1160px)}.nav{height:68px}.nav-links{gap:12px}.nav-links>a:not(.admin-link){display:none}.hero{grid-template-columns:1fr;gap:30px;padding:50px 0 38px}.hero-note{max-width:470px}.hero-foot{gap:12px 18px}.grid,.grid-topics,.grid-demos{grid-template-columns:1fr}.item-card{min-height:160px;padding:20px}.section-heading h2{font-size:20px}.feature-strip{grid-template-columns:1fr}.feature{padding:16px 18px}main{padding-top:32px}.section{margin-top:34px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 </style>
@@ -35,6 +52,12 @@ main{padding:44px 0 68px}.section{margin-top:40px}.section:first-child{margin-to
 </header>
 <main class="shell">
   <div id="status" class="status"><span class="status-dot"></span><span>正在同步已发布的研究内容……</span></div>
+  <section class="discovery-panel" id="discovery" aria-label="看板搜索与筛选">
+    <div class="section-heading" style="margin-bottom:14px"><div><div class="section-kicker">FIND THE RIGHT DASHBOARD</div><h2>搜索与筛选看板</h2><p>可以直接搜索，也可以按国家、产业和标签组合查找。</p></div></div>
+    <div class="discovery-top"><label class="search-wrap"><span>⌕</span><input id="dashboard-search" type="search" placeholder="搜索国家、产业、看板名称或关键词……" autocomplete="off" aria-label="搜索看板"></label><button class="reset-btn" id="reset-filters" type="button">重置筛选</button></div>
+    <div class="filter-row"><select id="filter-country" aria-label="按国家筛选"><option value="">全部国家 / 地区</option></select><select id="filter-industry" aria-label="按产业筛选"><option value="">全部产业</option></select><select id="filter-tag" aria-label="按标签筛选"><option value="">全部标签</option></select></div>
+    <div class="discovery-actions"><span id="filter-summary">正在整理看板目录……</span><span>每页最多展示 9 个看板</span></div>
+  </section>
   <section class="section" id="markets">
     <div class="section-heading"><div><div class="section-kicker">01 / COUNTRY MARKETS</div><h2>国家市场</h2><p>先了解市场环境，再深入具体产业。</p></div><span class="count" id="country-count">—</span></div>
     <div class="grid" id="countries"><div class="empty">正在加载国家市场……</div></div>
@@ -48,8 +71,8 @@ main{padding:44px 0 68px}.section{margin-top:40px}.section:first-child{margin-to
     <div class="grid grid-topics" id="topics"><div class="empty">正在加载专题研究……</div></div>
   </section>
   <section class="section" id="demos-section">
-    <div class="section-heading"><div><div class="section-kicker">04 / LIVE DASHBOARDS</div><h2>研究看板</h2><p>进入具体看板，查看市场动态、政策、贸易数据与准入信息。</p></div><span class="count" id="demo-count">—</span></div>
-    <div class="grid grid-demos" id="demos"><div class="empty">正在加载研究看板……</div></div>
+    <div class="section-heading"><div><div class="section-kicker">04 / LIVE DASHBOARDS</div><h2>研究看板</h2><p>可通过搜索和标签组合筛选。看板按批次加载，避免目录过长。</p></div><span class="count" id="demo-count">—</span></div>
+    <div class="grid grid-demos" id="demos"><div class="empty">正在加载研究看板……</div></div><div class="more-wrap"><button class="more-btn" id="load-more" type="button">加载更多看板 ↓</button></div>
   </section>
   <div class="feature-strip"><div class="feature"><strong>市场维度</strong><span>国家环境、政策方向与市场变化，帮助建立基础认知。</span></div><div class="feature"><strong>产业维度</strong><span>梳理产业链结构、主要参与者与本地发展条件。</span></div><div class="feature"><strong>准入维度</strong><span>关注认证、合规、贸易规则等进入市场前需要核实的问题。</span></div></div>
 </main>
@@ -60,26 +83,47 @@ const SUPABASE_URL = "https://zlfedybzoxlvjbzpluuo.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Ys9qA2p-xcMMGGUPMbHbJw_6_HdzMkQ";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 function safe(value){return String(value ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function card({title,desc,tag,index,url,linkText="查看研究内容"}){
-  const inner=`<div class="card-top"><span class="tag">${safe(tag)}</span><span class="card-index">${String(index).padStart(2,"0")}</span></div><h3>${safe(title)}</h3><p>${safe(desc||"相关内容持续整理中。")}</p><div class="card-bottom"><span>${safe(url?linkText:"内容持续更新")}</span><span class="arrow">${url?"↗":"—"}</span></div>`;
+function card({title,desc,tag,index,url,linkText="查看研究内容",accessMode="public",tags=[]}){
+  const badge=accessMode==="semi"?'<span class="access-badge">预览 · 定制咨询</span>':'';
+  const inner=`<div class="card-top"><span class="tag">${safe(tag)}</span><span class="card-index">${String(index).padStart(2,"0")}</span></div><h3>${safe(title)}</h3><p>${safe(desc||"相关内容持续整理中。")}</p>${tags.length?`<div class="result-tags">${tags.slice(0,4).map(t=>`<span>${safe(t)}</span>`).join("")}</div>`:""}<div class="card-bottom"><span>${safe(url?linkText:"内容持续更新")}</span><span>${badge||`<span class="arrow">${url?"↗":"—"}</span>`}</span></div>`;
   return url?`<a class="item-card is-link" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${inner}</a>`:`<article class="item-card">${inner}</article>`;
 }
-function render(id,rows,mapper,countId){document.getElementById(id).innerHTML=rows.length?rows.map(mapper).join(""):`<div class="empty">暂无已发布内容，后续将在这里更新。</div>`;document.getElementById(countId).textContent=`${rows.length} 项内容`;}
+function render(id,rows,mapper,countId){document.getElementById(id).innerHTML=rows.length?rows.map(mapper).join(""):`<div class="empty">暂无已发布内容，后续将在这里更新。</div>`;if(countId)document.getElementById(countId).textContent=`${rows.length} 项内容`;}
+const pageSize=9;let allDashboards=[],filteredDashboards=[],visibleCount=pageSize,allCountries=[],allIndustries=[],allTopics=[];
+function viewerUrl(d){return `viewer.html?id=${encodeURIComponent(d.id)}`;}
+function setOptions(id,items,labelFn,valueFn){const el=document.getElementById(id);const first=el.options[0];el.innerHTML="";el.appendChild(first);items.forEach(item=>{const o=document.createElement("option");o.value=valueFn(item);o.textContent=labelFn(item);el.appendChild(o);});}
+function dashboardTags(d){const out=[];const c=allCountries.find(x=>x.id===d.country_id);const i=allIndustries.find(x=>x.id===d.industry_id);if(c?.name)out.push(c.name);if(i?.name)out.push(i.name);(Array.isArray(d.tags)?d.tags:[]).forEach(t=>{if(t&&!out.includes(t))out.push(t)});return out;}
+function applyFilters(resetPage=true){if(resetPage)visibleCount=pageSize;const q=document.getElementById("dashboard-search").value.trim().toLowerCase();const country=document.getElementById("filter-country").value;const industry=document.getElementById("filter-industry").value;const tag=document.getElementById("filter-tag").value;
+ filteredDashboards=allDashboards.filter(d=>{const tags=dashboardTags(d);const hay=[d.name,d.description,...tags].join(" ").toLowerCase();return (!q||hay.includes(q))&&(!country||d.country_id===country)&&(!industry||d.industry_id===industry)&&(!tag||tags.includes(tag));});renderDashboardPage();}
+function renderDashboardPage(){const rows=filteredDashboards.slice(0,visibleCount);document.getElementById("demos").innerHTML=rows.length?rows.map((d,i)=>card({title:d.name,desc:d.description,tag:dashboardTags(d)[0]||"研究看板",index:i+1,url:viewerUrl(d),linkText:d.access_mode==="semi"?"查看预览 · 定制咨询":"打开看板",accessMode:d.access_mode,tags:dashboardTags(d)})).join(""):`<div class="empty">没有找到符合条件的看板。可以尝试更换关键词或清除部分筛选条件。</div>`;
+ document.getElementById("demo-count").textContent=`${filteredDashboards.length} 个看板`;document.getElementById("filter-summary").textContent=`找到 ${filteredDashboards.length} 个匹配看板，当前显示 ${rows.length} 个`;const more=document.getElementById("load-more");more.disabled=visibleCount>=filteredDashboards.length;more.textContent=more.disabled?"已显示全部结果":"加载更多看板 ↓";}
 async function load(){const status=document.getElementById("status");try{
-  const [countries,industries,demos,topics]=await Promise.all([
+ const [countries,industries,demos,topics]=await Promise.all([
+  db.from("countries").select("id,name,code,description,sort_order").eq("is_published",true).order("sort_order"),
+  db.from("industries").select("id,name,category,description,sort_order").eq("is_published",true).order("sort_order"),
+  db.from("demos").select("id,name,description,page_url,sort_order,country_id,industry_id,access_mode,preview_url,qr_url,consult_text,preview_percent,tags").eq("is_published",true).order("sort_order"),
+  db.from("topics").select("id,name,description,page_url,sort_order").eq("is_published",true).order("sort_order")
+ ]);
+ const error=countries.error||industries.error||demos.error||topics.error;
+ if(error){
+   // Compatibility fallback: the current database may not yet have the new access/tag columns.
+   const [d2,c2,i2,t2]=await Promise.all([
+    db.from("demos").select("id,name,description,page_url,sort_order,country_id,industry_id").eq("is_published",true).order("sort_order"),
     db.from("countries").select("id,name,description,sort_order").eq("is_published",true).order("sort_order"),
     db.from("industries").select("id,name,category,description,sort_order").eq("is_published",true).order("sort_order"),
-    db.from("demos").select("id,name,description,page_url,sort_order,country_id,industry_id").eq("is_published",true).order("sort_order"),
     db.from("topics").select("id,name,description,page_url,sort_order").eq("is_published",true).order("sort_order")
-  ]);
-  const error=countries.error||industries.error||demos.error||topics.error;if(error)throw error;
-  const cs=countries.data||[],ins=industries.data||[],ds=demos.data||[],ts=topics.data||[];
-  render("countries",cs,(r,i)=>{const related=ds.find(d=>d.country_id===r.id&&d.page_url);return card({title:r.name,desc:r.description,tag:"国家市场",index:i+1,url:related?.page_url,linkText:related?"进入相关看板":"市场资料持续建设"});},"country-count");
-  render("industries-list",ins,(r,i)=>{const related=ds.find(d=>d.industry_id===r.id&&d.page_url);return card({title:r.name,desc:r.description,tag:r.category||"产业领域",index:i+1,url:related?.page_url,linkText:related?"进入相关看板":"产业资料持续建设"});},"industry-count");
-  render("topics",ts,(r,i)=>card({title:r.name,desc:r.description,tag:"专题研究",index:i+1,url:r.page_url,linkText:"阅读专题"}),"topic-count");
-  render("demos",ds,(r,i)=>card({title:r.name,desc:r.description,tag:"研究看板",index:i+1,url:r.page_url,linkText:"打开看板"}),"demo-count");
-  status.classList.remove("error");status.innerHTML='<span class="status-dot"></span><span>内容已同步 · 仅展示已公开发布的项目</span>';
+   ]);const e=d2.error||c2.error||i2.error||t2.error;if(e)throw e;
+   allCountries=c2.data||[];allIndustries=i2.data||[];allTopics=t2.data||[];allDashboards=(d2.data||[]).map(d=>({...d,access_mode:"public",tags:[]}));
+ }else{allCountries=countries.data||[];allIndustries=industries.data||[];allTopics=topics.data||[];allDashboards=(demos.data||[]).map(d=>({...d,access_mode:d.access_mode||"public",tags:Array.isArray(d.tags)?d.tags:[]}));}
+ render("countries",allCountries,(r,i)=>{const related=allDashboards.find(d=>d.country_id===r.id&&d.page_url);return card({title:r.name,desc:r.description,tag:"国家市场",index:i+1,url:related?viewerUrl(related):null,linkText:related?"进入相关看板":"市场资料持续建设"});},"country-count");
+ render("industries-list",allIndustries,(r,i)=>{const related=allDashboards.find(d=>d.industry_id===r.id&&d.page_url);return card({title:r.name,desc:r.description,tag:r.category||"产业领域",index:i+1,url:related?viewerUrl(related):null,linkText:related?"进入相关看板":"产业资料持续建设"});},"industry-count");
+ render("topics",allTopics,(r,i)=>card({title:r.name,desc:r.description,tag:"专题研究",index:i+1,url:r.page_url,linkText:"阅读专题"}),"topic-count");
+ setOptions("filter-country",allCountries,x=>x.name,x=>x.id);setOptions("filter-industry",allIndustries,x=>x.name,x=>x.id);
+ const tags=[...new Set(allDashboards.flatMap(d=>dashboardTags(d)))].sort((a,b)=>a.localeCompare(b,"zh-CN"));setOptions("filter-tag",tags,x=>x,x=>x);
+ applyFilters();
+ status.classList.remove("error");status.innerHTML='<span class="status-dot"></span><span>内容已同步 · 仅展示已公开发布的项目</span>';
  }catch(e){console.error(e);status.classList.add("error");status.innerHTML='<span class="status-dot"></span><span>数据暂时无法加载，请检查网络或稍后刷新页面。</span>';}}
+document.getElementById("dashboard-search").addEventListener("input",()=>applyFilters());document.getElementById("filter-country").addEventListener("change",()=>applyFilters());document.getElementById("filter-industry").addEventListener("change",()=>applyFilters());document.getElementById("filter-tag").addEventListener("change",()=>applyFilters());document.getElementById("reset-filters").addEventListener("click",()=>{document.getElementById("dashboard-search").value="";document.getElementById("filter-country").value="";document.getElementById("filter-industry").value="";document.getElementById("filter-tag").value="";applyFilters();});document.getElementById("load-more").addEventListener("click",()=>{visibleCount+=pageSize;renderDashboardPage();});
 load();
 </script>
 </body>
