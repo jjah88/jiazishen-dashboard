@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>甲子申｜产业出海看板</title>
+<style>
+:root{--ink:#172b45;--muted:#6b7a8c;--line:#e4e9ef;--paper:#f5f7fa;--blue:#244f78}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+header{background:#fff;border-bottom:1px solid var(--line)}
+.top{max-width:1120px;margin:auto;padding:24px 22px}
+.brand{font-size:13px;letter-spacing:2px;color:#52718d}
+h1{font-size:30px;letter-spacing:1px;margin:12px 0 8px}
+.sub{font-size:14px;line-height:1.8;color:var(--muted)}
+main{max-width:1120px;margin:28px auto;padding:0 22px 50px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+h2{font-size:20px;margin:0}
+.small{font-size:13px;color:var(--muted)}
+a{text-decoration:none;color:inherit}
+.section{margin-top:32px}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.card{display:block;background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px;transition:border-color .15s}
+.card:hover{border-color:#8ca6bd}
+.tag{font-size:12px;color:#476b8b;background:#edf3f8;padding:5px 8px;border-radius:4px;display:inline-block}
+.card h3{font-size:18px;margin:14px 0 8px}
+.card p{font-size:13px;color:var(--muted);line-height:1.8;margin:0}
+.arrow{margin-top:18px;font-size:13px;color:var(--blue)}
+.empty,.status{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px;color:var(--muted);font-size:14px}
+footer{max-width:1120px;margin:auto;padding:0 22px 30px;color:#8793a1;font-size:12px}
+.admin-link{font-size:13px;color:var(--blue)}
+@media(max-width:760px){h1{font-size:25px}.grid{grid-template-columns:1fr}.top{padding:22px 18px}main{padding:0 18px 36px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="brand">JIAZISHEN · 甲子申</div>
+    <h1>产业出海看板</h1>
+    <div class="sub">从国家市场到产业机会，从政策准入到供应链信息。<br>为中国企业出海提供可查阅、可比较、可持续更新的产业信息。</div>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <div>
+      <h2>市场与产业导航</h2>
+      <div class="small" style="margin-top:7px">选择国家、产业或专题，查看对应的市场研究看板。</div>
+    </div>
+    <a class="admin-link" href="admin.html">管理入口 ↗</a>
+  </div>
+
+  <div id="status" class="status">正在加载市场数据……</div>
+
+  <section class="section">
+    <div class="section-head"><h2>国家市场</h2><span class="small" id="country-count"></span></div>
+    <div class="grid" id="countries"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>产业领域</h2><span class="small" id="industry-count"></span></div>
+    <div class="grid" id="industries"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>专题研究</h2><span class="small" id="topic-count"></span></div>
+    <div class="grid" id="topics"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>最新看板</h2><span class="small" id="demo-count"></span></div>
+    <div class="grid" id="demos"></div>
+  </section>
+</main>
+
+<footer>甲子申｜产业出海看板　·　公开页面仅供信息查阅</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://zlfedybzoxlvjbzpluuo.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Ys9qA2p-xcMMGGUPMbHbJw_6_HdzMkQ";
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+function safe(value){
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+function card(title,desc,tag,url){
+  const content = `<span class="tag">${safe(tag)}</span><h3>${safe(title)}</h3><p>${safe(desc || "持续更新中")}</p><div class="arrow">查看详情 ↗</div>`;
+  if(url) return `<a class="card" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${content}</a>`;
+  return `<div class="card">${content}</div>`;
+}
+function render(id,rows,makeCard,countId){
+  document.getElementById(id).innerHTML = rows.length
+    ? rows.map(makeCard).join("")
+    : `<div class="empty">暂无已发布内容</div>`;
+  document.getElementById(countId).textContent = `${rows.length} 项`;
+}
+async function load(){
+  const status = document.getElementById("status");
+  try{
+    const [countries,industries,demos,topics] = await Promise.all([
+      db.from("countries").select("id,name,description,sort_order").eq("is_published",true).order("sort_order"),
+      db.from("industries").select("id,name,category,description,sort_order").eq("is_published",true).order("sort_order"),
+      db.from("demos").select("id,name,description,page_url,sort_order,country_id,industry_id").eq("is_published",true).order("sort_order"),
+      db.from("topics").select("id,name,description,page_url,sort_order").eq("is_published",true).order("sort_order")
+    ]);
+    const error = countries.error || industries.error || demos.error || topics.error;
+    if(error) throw error;
+    render("countries",countries.data,r=>card(r.name,r.description,"国家市场",null),"country-count");
+    render("industries",industries.data,r=>card(r.name,r.description,r.category || "产业领域",null),"industry-count");
+    render("topics",topics.data,r=>card(r.name,r.description,"专题研究",r.page_url),"topic-count");
+    render("demos",demos.data,r=>card(r.name,r.description,"研究看板",r.page_url),"demo-count");
+    status.textContent = "市场数据已更新";
+  }catch(e){
+    console.error(e);
+    status.textContent = "数据暂时无法加载。请检查 Supabase 配置与数据读取权限。";
+  }
+}
+load();
+</script>
+</body>
+</html>
