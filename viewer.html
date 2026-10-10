@@ -13,9 +13,46 @@ function showMessage(title,body,actions="",qrUrl="",status=""){document.getEleme
    const {data:{session},error:sessionError}=await db.auth.getSession();if(sessionError)throw sessionError;
    if(!session?.user){const ret="viewer.html?id="+encodeURIComponent(id);showMessage("这份产业研究面向甲子申会员开放","请先登录甲子申账号。尚未开通会员？可先注册，再通过咨询二维码联系甲子申，人工确认付款后即可开通全部会员看板。",`<a href="member.html?return=${encodeURIComponent(ret)}">登录 / 注册</a><a class="secondary" href="./">返回看板中心</a>`,d.qr_url||"","会员专享内容需要有效会员权限。");return;}
    status.textContent=d.name+" · 正在核验会员权限……";
-   const {data:access,error:accessError}=await db.functions.invoke("get-private-dashboard",{body:{demo_id:id}});
-   if(accessError||!access?.signed_url){let detail=access?.error||"当前账号尚未开通有效会员。";if(accessError&&accessError.context&&typeof accessError.context.json==="function"){try{const payload=await accessError.context.json();detail=payload.error||detail;}catch{}}showMessage("暂时无法查看完整看板", "会员专享内容仅向已开通的甲子申会员开放。若已付款，请确认使用付款时登记的邮箱登录，并联系管理员核实开通。",`<a href="member.html?return=${encodeURIComponent("viewer.html?id="+id)}">查看会员状态</a><a class="secondary" href="./">返回看板中心</a>`,d.qr_url||"",detail);status.textContent="会员权限验证未通过";return;}
-   const frame=document.getElementById("board-frame");frame.src=access.signed_url;status.textContent=d.name+" · 会员权限已验证";return;
+   const { data: access, error: accessError } = await db.functions.invoke(
+  "get-private-dashboard",
+  { body: { demo_id: id } }
+);
+
+if (
+  accessError ||
+  typeof access !== "string" ||
+  (
+    !access.trimStart().toLowerCase().startsWith("<!doctype html") &&
+    !access.trimStart().toLowerCase().startsWith("<html")
+  )
+) {
+  let detail = "会员看板加载失败，请重新登录后重试。";
+
+  if (accessError?.context && typeof accessError.context.json === "function") {
+    try {
+      const payload = await accessError.context.json();
+      detail = payload.error || detail;
+    } catch {}
+  } else if (access && typeof access === "object" && access.error) {
+    detail = access.error;
+  }
+
+  showMessage(
+    "暂时无法查看完整看板",
+    "会员专享内容仅向已开通的甲子申会员开放。若已付款，请确认使用付款时登记的邮箱登录，并联系管理员核实开通。",
+    `<a href="member.html?return=${encodeURIComponent("viewer.html?id=" + id)}">查看会员状态</a><a class="secondary" href="./">返回看板中心</a>`,
+    d.qr_url || "",
+    detail
+  );
+
+  status.textContent = "会员看板加载失败";
+  return;
+}
+
+const frame = document.getElementById("board-frame");
+frame.srcdoc = access;
+status.textContent = d.name + " · 会员权限已验证";
+return;
  }
  const semi=d.access_mode==="semi";const url=semi?(d.preview_url||d.page_url):d.page_url;if(!url)throw new Error("该看板尚未配置访问地址。");const frame=document.getElementById("board-frame");if(semi){const pct=Math.max(20,Math.min(70,Number(d.preview_percent)||45));const gate=document.getElementById("gate");document.getElementById("gate-title").textContent="查看完整研究内容";document.getElementById("gate-copy").textContent=d.consult_text||"当前为预览版。完整产业数据与深度研究，可扫码咨询定制服务。";if(d.qr_url)document.getElementById("qr-area").innerHTML='<img class="qr" alt="微信咨询二维码" src="'+safe(d.qr_url)+'">';gate.style.display="flex";frame.addEventListener("load",()=>{const ok=limitPreviewScroll(frame,pct);if(!ok)status.textContent=d.name+" · 预览模式（跨域页面无法限制内部滚动，请将预览 HTML 放在本网站同域）";},{once:true});}frame.src=url;
  }catch(e){console.error(e);document.getElementById("main").innerHTML='<div class="error">'+safe(e.message||"看板暂时无法打开")+'<br><a href="./">返回甲子申首页</a></div>';status.textContent="看板暂时无法打开";}})();
