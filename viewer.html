@@ -6,53 +6,50 @@ const SUPABASE_URL="https://zlfedybzoxlvjbzpluuo.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY="sb_publishable_Ys9qA2p-xcMMGGUPMbHbJw_6_HdzMkQ";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 function safe(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function limitPreviewScroll(frame,pct){try{const w=frame.contentWindow,doc=frame.contentDocument;if(!w||!doc||!doc.documentElement)return false;let maxAllowed=0;const recalc=()=>{const root=doc.documentElement,body=doc.body;const full=Math.max(root.scrollHeight,body?body.scrollHeight:0);const view=w.innerHeight||root.clientHeight||1;const maxScroll=Math.max(0,full-view);maxAllowed=Math.floor(maxScroll*pct/100);if(w.scrollY>maxAllowed)w.scrollTo(0,maxAllowed);};recalc();w.addEventListener("scroll",()=>{if(w.scrollY>maxAllowed+2)w.scrollTo(0,maxAllowed);},{passive:true});w.addEventListener("resize",recalc);doc.addEventListener("wheel",e=>{if(w.scrollY>=maxAllowed-1&&e.deltaY>0){e.preventDefault();w.scrollTo(0,maxAllowed);}},{passive:false});doc.addEventListener("keydown",e=>{if(["ArrowDown","PageDown"," ","End"].includes(e.key)&&w.scrollY>=maxAllowed-1){e.preventDefault();w.scrollTo(0,maxAllowed);}},{passive:false});if(w.ResizeObserver)new w.ResizeObserver(recalc).observe(doc.body||doc.documentElement);else{setTimeout(recalc,500);setTimeout(recalc,1800);}return true;}catch(e){console.warn("跨域看板无法限制内部滚动；请使用与 viewer.html 同域的 HTML 看板地址。",e);return false;}}
+function limitPreviewScroll(frame,pct){
+  try{
+    const w=frame.contentWindow,doc=frame.contentDocument;
+    if(!w||!doc||!doc.documentElement)return false;
+    let maxAllowed=0,fullHeight=0,locked=false;
+    const getHeight=()=>Math.max(doc.documentElement.scrollHeight,doc.body?doc.body.scrollHeight:0,doc.documentElement.offsetHeight,doc.body?doc.body.offsetHeight:0);
+    const clamp=()=>{
+      if(!locked)return;
+      const y=w.scrollY||doc.documentElement.scrollTop|| (doc.body&&doc.body.scrollTop)||0;
+      if(y>maxAllowed+1)w.scrollTo({top:maxAllowed,behavior:'auto'});
+    };
+    const recalc=()=>{
+      fullHeight=getHeight();
+      const view=w.innerHeight||doc.documentElement.clientHeight||1;
+      // 允许页面滚动到“整页高度 × 预览比例”处，而不是错误地按可滚动距离计算比例。
+      maxAllowed=Math.max(0,Math.floor(fullHeight*pct/100-view));
+      locked=true;
+      clamp();
+    };
+    recalc();
+    let ticking=false;
+    const onScroll=()=>{if(ticking)return;ticking=true;w.requestAnimationFrame(()=>{clamp();ticking=false;});};
+    w.addEventListener('scroll',onScroll,{passive:true});
+    w.addEventListener('resize',recalc);
+    const stopAtLimit=e=>{
+      const y=w.scrollY||doc.documentElement.scrollTop||(doc.body&&doc.body.scrollTop)||0;
+      if(y>=maxAllowed-1 && maxAllowed>=0 && (e.deltaY>0 || ['ArrowDown','PageDown',' ','End'].includes(e.key))){e.preventDefault();w.scrollTo({top:maxAllowed,behavior:'auto'});}
+    };
+    doc.addEventListener('wheel',stopAtLimit,{passive:false});
+    doc.addEventListener('keydown',stopAtLimit,{passive:false});
+    if(w.ResizeObserver)new w.ResizeObserver(()=>{recalc();}).observe(doc.body||doc.documentElement);
+    else {w.setTimeout(recalc,500);w.setTimeout(recalc,1500);w.setTimeout(recalc,3000);}
+    return true;
+  }catch(e){console.warn('跨域看板无法限制内部滚动；请填写与 viewer.html 同域的独立预览版网址。',e);return false;}
+}
 function showMessage(title,body,actions="",qrUrl="",status=""){document.getElementById("main").innerHTML=`<section class="member-wall"><div class="member-card"><h1>${safe(title)}</h1><p>${safe(body)}</p>${status?`<div class="member-status">${safe(status)}</div>`:""}${qrUrl?`<img class="member-qr" src="${safe(qrUrl)}" alt="甲子申咨询二维码">`:""}<div class="member-actions">${actions}</div></div></section>`;}
 (async()=>{const status=document.getElementById("status");try{const id=new URLSearchParams(location.search).get("id");if(!id)throw new Error("缺少看板编号。");let result=await db.from("demos").select("id,name,description,page_url,access_mode,preview_url,qr_url,consult_text,preview_percent,is_published").eq("id",id).eq("is_published",true).maybeSingle();if(result.error)throw result.error;const d=result.data;if(!d)throw new Error("该看板不存在或尚未发布。");document.title=d.name+"｜甲子申";status.textContent=d.name+(d.access_mode==="members"?" · 会员专享":d.access_mode==="semi"?" · 公开预览":" · 完整看板");
  if(d.access_mode==="members"){
    const {data:{session},error:sessionError}=await db.auth.getSession();if(sessionError)throw sessionError;
    if(!session?.user){const ret="viewer.html?id="+encodeURIComponent(id);showMessage("这份产业研究面向甲子申会员开放","请先登录甲子申账号。尚未开通会员？可先注册，再通过咨询二维码联系甲子申，人工确认付款后即可开通全部会员看板。",`<a href="member.html?return=${encodeURIComponent(ret)}">登录 / 注册</a><a class="secondary" href="./">返回看板中心</a>`,d.qr_url||"","会员专享内容需要有效会员权限。");return;}
    status.textContent=d.name+" · 正在核验会员权限……";
-   const { data: access, error: accessError } = await db.functions.invoke(
-  "get-private-dashboard",
-  { body: { demo_id: id } }
-);
-
-if (
-  accessError ||
-  typeof access !== "string" ||
-  (
-    !access.trimStart().toLowerCase().startsWith("<!doctype html") &&
-    !access.trimStart().toLowerCase().startsWith("<html")
-  )
-) {
-  let detail = "会员看板加载失败，请重新登录后重试。";
-
-  if (accessError?.context && typeof accessError.context.json === "function") {
-    try {
-      const payload = await accessError.context.json();
-      detail = payload.error || detail;
-    } catch {}
-  } else if (access && typeof access === "object" && access.error) {
-    detail = access.error;
-  }
-
-  showMessage(
-    "暂时无法查看完整看板",
-    "会员专享内容仅向已开通的甲子申会员开放。若已付款，请确认使用付款时登记的邮箱登录，并联系管理员核实开通。",
-    `<a href="member.html?return=${encodeURIComponent("viewer.html?id=" + id)}">查看会员状态</a><a class="secondary" href="./">返回看板中心</a>`,
-    d.qr_url || "",
-    detail
-  );
-
-  status.textContent = "会员看板加载失败";
-  return;
-}
-
-const frame = document.getElementById("board-frame");
-frame.srcdoc = access;
-status.textContent = d.name + " · 会员权限已验证";
-return;
+   const {data:access,error:accessError}=await db.functions.invoke("get-private-dashboard",{body:{demo_id:id}});
+   if(accessError||!access?.signed_url){let detail=access?.error||"当前账号尚未开通有效会员。";if(accessError&&accessError.context&&typeof accessError.context.json==="function"){try{const payload=await accessError.context.json();detail=payload.error||detail;}catch{}}showMessage("暂时无法查看完整看板", "会员专享内容仅向已开通的甲子申会员开放。若已付款，请确认使用付款时登记的邮箱登录，并联系管理员核实开通。",`<a href="member.html?return=${encodeURIComponent("viewer.html?id="+id)}">查看会员状态</a><a class="secondary" href="./">返回看板中心</a>`,d.qr_url||"",detail);status.textContent="会员权限验证未通过";return;}
+   const frame=document.getElementById("board-frame");frame.src=access.signed_url;status.textContent=d.name+" · 会员权限已验证";return;
  }
  const semi=d.access_mode==="semi";const url=semi?(d.preview_url||d.page_url):d.page_url;if(!url)throw new Error("该看板尚未配置访问地址。");const frame=document.getElementById("board-frame");if(semi){const pct=Math.max(20,Math.min(70,Number(d.preview_percent)||45));const gate=document.getElementById("gate");document.getElementById("gate-title").textContent="查看完整研究内容";document.getElementById("gate-copy").textContent=d.consult_text||"当前为预览版。完整产业数据与深度研究，可扫码咨询定制服务。";if(d.qr_url)document.getElementById("qr-area").innerHTML='<img class="qr" alt="微信咨询二维码" src="'+safe(d.qr_url)+'">';gate.style.display="flex";frame.addEventListener("load",()=>{const ok=limitPreviewScroll(frame,pct);if(!ok)status.textContent=d.name+" · 预览模式（跨域页面无法限制内部滚动，请将预览 HTML 放在本网站同域）";},{once:true});}frame.src=url;
  }catch(e){console.error(e);document.getElementById("main").innerHTML='<div class="error">'+safe(e.message||"看板暂时无法打开")+'<br><a href="./">返回甲子申首页</a></div>';status.textContent="看板暂时无法打开";}})();
