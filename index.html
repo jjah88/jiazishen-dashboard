@@ -30,6 +30,10 @@ main{padding:44px 0 68px}.section{margin-top:40px}.section:first-child{margin-to
 @media(max-width:760px){.shell{width:min(100% - 32px,1160px)}.nav{height:68px}.nav-links{gap:12px}.nav-links>a:not(.admin-link){display:none}.hero{grid-template-columns:1fr;gap:30px;padding:50px 0 38px}.hero-note{max-width:470px}.hero-foot{gap:12px 18px}.grid,.grid-topics,.grid-demos{grid-template-columns:1fr}.item-card{min-height:160px;padding:20px}.section-heading h2{font-size:20px}.section-tools{gap:6px}.quick-add{padding:7px 8px}.feature-strip{grid-template-columns:1fr}.feature{padding:16px 18px}main{padding-top:32px}.section{margin-top:34px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 .section.filtered-hidden{display:none!important}#demos-section.filtered-active{margin-top:24px}#demos-section.filtered-active .section-heading p{color:var(--muted)}
+
+/* Compact homepage refresh */
+[hidden]{display:none!important}.compact-hero{display:block;padding:26px 0 28px}.compact-hero h1{font-size:clamp(28px,3vw,38px);margin:10px 0 8px}.compact-hero .hero-copy{font-size:14px;line-height:1.7}.site-header:after{width:320px;height:320px;top:-220px}.nav{height:66px}.discovery-panel{padding:18px;margin-bottom:20px;background:#eeeee8}.discovery-panel .section-heading h2{font-size:20px}.discovery-panel .section-heading p{margin-top:5px}.category-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.category-pill{border:1px solid #d9dfda;background:#fffefa;color:#40576a;padding:8px 14px;font-size:12px;cursor:pointer;border-radius:2px}.category-pill.active{background:var(--navy);border-color:var(--navy);color:#fff}.filter-row{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:10px}.view-hidden{display:none!important}#demos-section{margin-top:18px!important}.grid-demos{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-demos .item-card{padding:0;min-height:0}.dashboard-cover{height:145px;background-size:cover;background-position:center;background-color:#d9e2df;position:relative}.dashboard-cover:after{content:"产业出海研究";position:absolute;left:12px;bottom:10px;color:white;font-size:10px;letter-spacing:1px;text-shadow:0 1px 5px rgba(0,0,0,.6)}.cover-solar{background-image:linear-gradient(0deg,rgba(10,35,49,.45),rgba(10,35,49,.02)),url('https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=900&q=80')}.cover-wind{background-image:linear-gradient(0deg,rgba(10,35,49,.45),rgba(10,35,49,.02)),url('https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&w=900&q=80')}.cover-storage{background-image:linear-gradient(0deg,rgba(10,35,49,.45),rgba(10,35,49,.02)),url('https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=900&q=80')}.cover-nuclear{background-image:linear-gradient(0deg,rgba(10,35,49,.45),rgba(10,35,49,.02)),url('https://images.unsplash.com/photo-1516937941344-00b4e0337589?auto=format&fit=crop&w=900&q=80')}.cover-default{background-image:linear-gradient(0deg,rgba(10,35,49,.45),rgba(10,35,49,.02)),url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80')}.card-body{padding:17px 18px 18px;display:flex;flex-direction:column;flex:1;min-height:190px}.grid-demos .item-card h3{margin:14px 0 7px;font-size:17px}.grid-demos .item-card p{font-size:12px;line-height:1.7}.grid-demos .card-bottom{padding-top:14px}.section{margin-top:18px}.section-heading{margin-bottom:12px}.feature-strip{margin-top:24px}
+@media(max-width:760px){.compact-hero{padding:22px 0}.grid-demos{grid-template-columns:1fr}.dashboard-cover{height:170px}.filter-row{grid-template-columns:1fr}.discovery-panel{padding:14px}.category-pills{gap:6px}.category-pill{padding:8px 11px}.card-body{min-height:160px}.nav{height:62px}}
 </style>
 </head>
 <body>
@@ -37,26 +41,17 @@ main{padding:44px 0 68px}.section{margin-top:40px}.section:first-child{margin-to
   <div class="shell">
     <nav class="nav" aria-label="主导航">
       <a class="brand" href="./" aria-label="甲子申首页"><span class="brand-mark">甲</span><span>JIAZISHEN · 甲子申</span></a>
-      <div class="nav-links"><a href="#markets">国家市场</a><a href="#industries">产业领域</a><a href="#research">专题研究</a><a href="member.html">会员中心</a><a class="admin-link" href="admin.html">管理后台 ↗</a></div>
+      <div class="nav-links"><a href="member.html">会员中心</a><a class="admin-link" href="admin.html" id="admin-nav-link" hidden>管理后台 ↗</a></div>
     </nav>
-    <div class="hero">
-      <div>
-        <div class="eyebrow">INDUSTRY INTELLIGENCE · GLOBAL MARKETS</div>
-        <h1>看懂一个市场，<br>再决定如何出海。</h1>
-        <p class="hero-copy">从国家市场、产业结构到政策法规与市场准入，持续整理中国企业出海需要的产业信息。让市场研究更有依据，让出海判断更有章法。</p>
-        <div class="hero-actions"><a class="btn btn-primary" href="#markets">探索国家市场 <span>↗</span></a><a class="btn btn-ghost" href="#research">浏览研究内容 <span>↓</span></a></div>
-      </div>
-      <aside class="hero-note"><div class="big">不只看市场机会，<br>也看进入市场的条件。</div><p>政策与合规 · 贸易与准入 · 产业链与企业<br>从信息整理，走向出海决策支持。</p></aside>
-    </div>
-    <div class="hero-foot"><span><i></i> 国家市场持续扩展</span><span><i></i> 产业信息分层整理</span><span><i></i> 已发布内容动态更新</span></div>
+    <div class="hero compact-hero"><div><div class="eyebrow">INDUSTRY INTELLIGENCE · GLOBAL MARKETS</div><h1>产业出海看板</h1><p class="hero-copy">国家市场、产业机会、政策法规与市场准入信息，集中检索，持续更新。</p></div></div>
   </div>
 </header>
 <main class="shell">
   <div id="status" class="status"><span class="status-dot"></span><span>正在同步已发布的研究内容……</span></div>
   <section class="discovery-panel" id="discovery" aria-label="看板搜索与筛选">
-    <div class="section-heading" style="margin-bottom:14px"><div><div class="section-kicker">FIND THE RIGHT DASHBOARD</div><h2>搜索与筛选看板</h2><p>可以直接搜索，也可以按国家、产业和标签组合查找。</p></div></div>
+    <div class="section-heading" style="margin-bottom:12px"><div><div class="section-kicker">FIND THE RIGHT DASHBOARD</div><h2>查找产业看板</h2><p>搜索国家、产业、企业或关键词，快速定位研究内容。</p></div></div>
     <div class="discovery-top"><label class="search-wrap"><span>⌕</span><input id="dashboard-search" type="search" placeholder="搜索国家、产业、看板名称或关键词……" autocomplete="off" aria-label="搜索看板"></label><button class="reset-btn" id="reset-filters" type="button">重置筛选</button></div>
-    <div class="filter-row"><select id="filter-country" aria-label="按国家筛选"><option value="">全部国家 / 地区</option></select><select id="filter-industry" aria-label="按产业筛选"><option value="">全部产业</option></select><select id="filter-tag" aria-label="按标签筛选"><option value="">全部标签</option></select></div>
+    <div class="category-pills" role="navigation" aria-label="内容分类"><button type="button" class="category-pill active" data-view="demos">全部看板</button><button type="button" class="category-pill" data-view="markets">国家市场</button><button type="button" class="category-pill" data-view="industries">产业领域</button><button type="button" class="category-pill" data-view="research">专题研究</button></div><div class="filter-row"><select id="filter-country" aria-label="按国家筛选"><option value="">全部国家 / 地区</option></select><select id="filter-industry" aria-label="按产业筛选"><option value="">全部产业</option></select><select id="filter-tag" aria-label="按标签筛选"><option value="">全部标签</option></select></div>
     <div class="discovery-actions"><span id="filter-summary">正在整理看板目录……</span><span>每页最多展示 9 个看板</span></div>
   </section>
   <section class="section" id="markets">
@@ -77,29 +72,29 @@ main{padding:44px 0 68px}.section{margin-top:40px}.section:first-child{margin-to
   </section>
   <div class="feature-strip"><div class="feature"><strong>市场维度</strong><span>国家环境、政策方向与市场变化，帮助建立基础认知。</span></div><div class="feature"><strong>产业维度</strong><span>梳理产业链结构、主要参与者与本地发展条件。</span></div><div class="feature"><strong>准入维度</strong><span>关注认证、合规、贸易规则等进入市场前需要核实的问题。</span></div></div>
 </main>
-<footer><div class="shell footer-inner"><div><div class="footer-brand">JIAZISHEN · 甲子申</div><div class="footer-note">产业出海研究与信息整理平台。公开内容仅供研究参考，具体商业决策请以最新官方规则及专业意见为准。</div></div><div class="footer-links"><a href="#markets">国家市场</a><a href="#industries">产业领域</a><a href="member.html">会员中心</a><a href="admin.html">管理后台 ↗</a></div></div></footer>
+<footer><div class="shell footer-inner"><div><div class="footer-brand">JIAZISHEN · 甲子申</div><div class="footer-note">产业出海研究与信息整理平台。公开内容仅供研究参考，具体商业决策请以最新官方规则及专业意见为准。</div></div><div class="footer-links"><a href="member.html">会员中心</a><a href="admin.html" id="admin-footer-link" hidden>管理后台 ↗</a></div></div></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://zlfedybzoxlvjbzpluuo.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_Ys9qA2p-xcMMGGUPMbHbJw_6_HdzMkQ";
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 function safe(value){return String(value ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function card({title,desc,tag,index,url,linkText="查看研究内容",accessMode="public",tags=[]}){
+function card({title,desc,tag,index,url,linkText="查看研究内容",accessMode="public",tags=[],cover=false}){
   const badge=accessMode==="semi"?'<span class="access-badge">预览 · 定制咨询</span>':accessMode==="members"?'<span class="access-badge">会员专享</span>':'';
-  const inner=`<div class="card-top"><span class="tag">${safe(tag)}</span><span class="card-index">${String(index).padStart(2,"0")}</span></div><h3>${safe(title)}</h3><p>${safe(desc||"相关内容持续整理中。")}</p>${tags.length?`<div class="result-tags">${tags.slice(0,4).map(t=>`<span>${safe(t)}</span>`).join("")}</div>`:""}<div class="card-bottom"><span>${safe(url?linkText:"内容持续更新")}</span><span>${badge||`<span class="arrow">${url?"↗":"—"}</span>`}</span></div>`;
+  const coverHtml=cover?`<div class="dashboard-cover ${/光伏|太阳能|新能源/i.test(title+" "+tag)?"cover-solar":/风电|风力/i.test(title+" "+tag)?"cover-wind":/储能|电池/i.test(title+" "+tag)?"cover-storage":/核电|核能/i.test(title+" "+tag)?"cover-nuclear":"cover-default"}" role="img" aria-label="${safe(title)}产业封面"></div>`:"";
+  const inner=`${coverHtml}<div class="card-body"><div class="card-top"><span class="tag">${safe(tag)}</span><span class="card-index">${String(index).padStart(2,"0")}</span></div><h3>${safe(title)}</h3><p>${safe(desc||"相关内容持续整理中。")}</p>${tags.length?`<div class="result-tags">${tags.slice(0,4).map(t=>`<span>${safe(t)}</span>`).join("")}</div>`:""}<div class="card-bottom"><span>${safe(url?linkText:"内容持续更新")}</span><span>${badge||`<span class="arrow">${url?"↗":"—"}</span>`}</span></div></div>`;
   return url?`<a class="item-card is-link" href="${safe(url)}" target="_blank" rel="noopener noreferrer">${inner}</a>`:`<article class="item-card">${inner}</article>`;
 }
 function render(id,rows,mapper,countId){document.getElementById(id).innerHTML=rows.length?rows.map(mapper).join(""):`<div class="empty">暂无已发布内容，后续将在这里更新。</div>`;if(countId)document.getElementById(countId).textContent=`${rows.length} 项内容`;}
-const pageSize=9;let allDashboards=[],filteredDashboards=[],visibleCount=pageSize,allCountries=[],allIndustries=[],allTopics=[];
+const pageSize=9;let allDashboards=[],filteredDashboards=[],visibleCount=pageSize,allCountries=[],allIndustries=[],allTopics=[],activeView="demos";
 function viewerUrl(d){return `viewer.html?id=${encodeURIComponent(d.id)}`;}
 function setOptions(id,items,labelFn,valueFn){const el=document.getElementById(id);const first=el.options[0];el.innerHTML="";el.appendChild(first);items.forEach(item=>{const o=document.createElement("option");o.value=valueFn(item);o.textContent=labelFn(item);el.appendChild(o);});}
 function dashboardTags(d){const out=[];const c=allCountries.find(x=>x.id===d.country_id);const i=allIndustries.find(x=>x.id===d.industry_id);if(c?.name)out.push(c.name);if(i?.name)out.push(i.name);(Array.isArray(d.tags)?d.tags:[]).forEach(t=>{if(t&&!out.includes(t))out.push(t)});return out;}
 function applyFilters(resetPage=true){if(resetPage)visibleCount=pageSize;const q=document.getElementById("dashboard-search").value.trim().toLowerCase();const country=document.getElementById("filter-country").value;const industry=document.getElementById("filter-industry").value;const tag=document.getElementById("filter-tag").value;
- const active=!!(q||country||industry||tag);const markets=document.getElementById("markets"),industries=document.getElementById("industries"),research=document.getElementById("research"),demos=document.getElementById("demos-section"),feature=document.querySelector(".feature-strip"),discovery=document.getElementById("discovery");
- markets.classList.toggle("filtered-hidden",active);industries.classList.toggle("filtered-hidden",active);demos.classList.toggle("filtered-active",active);
- if(active){discovery.after(demos);}else{research.after(demos);}
+ const active=!!(q||country||industry||tag);const markets=document.getElementById("markets"),industries=document.getElementById("industries"),research=document.getElementById("research"),demos=document.getElementById("demos-section");
+ markets.classList.toggle("view-hidden",activeView!=="markets"||active);industries.classList.toggle("view-hidden",activeView!=="industries"||active);research.classList.toggle("view-hidden",activeView!=="research"||active);demos.classList.toggle("view-hidden",activeView!=="demos"&&!active);
  filteredDashboards=allDashboards.filter(d=>{const tags=dashboardTags(d);const hay=[d.name,d.description,...tags].join(" ").toLowerCase();return (!q||hay.includes(q))&&(!country||d.country_id===country)&&(!industry||d.industry_id===industry)&&(!tag||tags.includes(tag));});renderDashboardPage();}
-function renderDashboardPage(){const rows=filteredDashboards.slice(0,visibleCount);document.getElementById("demos").innerHTML=rows.length?rows.map((d,i)=>card({title:d.name,desc:d.description,tag:dashboardTags(d)[0]||"研究看板",index:i+1,url:viewerUrl(d),linkText:d.access_mode==="semi"?"查看预览 · 定制咨询":d.access_mode==="members"?"登录会员查看":"打开看板",accessMode:d.access_mode,tags:dashboardTags(d)})).join(""):`<div class="empty">没有找到符合条件的看板。可以尝试更换关键词或清除部分筛选条件。</div>`;
+function renderDashboardPage(){const rows=filteredDashboards.slice(0,visibleCount);document.getElementById("demos").innerHTML=rows.length?rows.map((d,i)=>card({title:d.name,desc:d.description,tag:dashboardTags(d)[0]||"研究看板",index:i+1,url:viewerUrl(d),linkText:d.access_mode==="semi"?"查看预览 · 定制咨询":d.access_mode==="members"?"登录会员查看":"打开看板",accessMode:d.access_mode,tags:dashboardTags(d),cover:true})).join(""):`<div class="empty">没有找到符合条件的看板。可以尝试更换关键词或清除部分筛选条件。</div>`;
  document.getElementById("demo-count").textContent=`${filteredDashboards.length} 个看板`;document.getElementById("filter-summary").textContent=`找到 ${filteredDashboards.length} 个匹配看板，当前显示 ${rows.length} 个`;const more=document.getElementById("load-more");more.disabled=visibleCount>=filteredDashboards.length;more.textContent=more.disabled?"已显示全部结果":"加载更多看板 ↓";}
 async function load(){const status=document.getElementById("status");try{
  const [countries,industries,demos,topics]=await Promise.all([
@@ -132,10 +127,11 @@ async function revealAdminShortcuts(){
   const {data:{session}}=await db.auth.getSession();
   if(!session?.user)return;
   const {data,error}=await db.rpc("is_admin");
-  if(!error&&data===true)document.querySelectorAll("[data-admin-add]").forEach(el=>el.style.display="inline-flex");
+  if(!error&&data===true){document.querySelectorAll("[data-admin-add]").forEach(el=>el.style.display="inline-flex");const a=document.getElementById("admin-nav-link");if(a)a.hidden=false;const f=document.getElementById("admin-footer-link");if(f)f.hidden=false;}
  }catch(e){console.debug("管理员快捷入口未启用",e);}
 }
 revealAdminShortcuts();
+document.querySelectorAll(".category-pill").forEach(b=>b.addEventListener("click",()=>{activeView=b.dataset.view;document.querySelectorAll(".category-pill").forEach(x=>x.classList.toggle("active",x===b));applyFilters();}));
 document.getElementById("dashboard-search").addEventListener("input",()=>applyFilters());document.getElementById("filter-country").addEventListener("change",()=>applyFilters());document.getElementById("filter-industry").addEventListener("change",()=>applyFilters());document.getElementById("filter-tag").addEventListener("change",()=>applyFilters());document.getElementById("reset-filters").addEventListener("click",()=>{document.getElementById("dashboard-search").value="";document.getElementById("filter-country").value="";document.getElementById("filter-industry").value="";document.getElementById("filter-tag").value="";applyFilters();});document.getElementById("load-more").addEventListener("click",()=>{visibleCount+=pageSize;renderDashboardPage();});
 load();
 </script>

@@ -64,6 +64,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <div id="login-status" class="status"></div>
   </section>
 
+  <section id="denied-panel" class="panel hidden" style="max-width:620px;margin:30px auto;text-align:center;padding:34px 24px">
+    <div style="font-size:12px;letter-spacing:2px;color:#58718a">JIAZISHEN · ACCESS CONTROL</div>
+    <h2 style="margin:14px 0 8px">无权访问管理后台</h2>
+    <p style="font-size:14px;line-height:1.8;color:#6b7a8c;margin:0 0 20px">此页面仅向甲子申管理员开放。你的账号可以继续浏览已授权的看板。</p>
+    <div class="actions" style="justify-content:center"><a href="./" style="display:inline-block;padding:10px 16px;border:1px solid #244f78;border-radius:6px;color:#244f78;font-size:13px">返回首页</a><button type="button" id="denied-logout" class="secondary">退出登录</button></div>
+  </section>
   <section id="admin-panel" class="hidden">
     <div class="panel">
       <div class="row" style="align-items:center">
@@ -387,8 +393,8 @@ let selectedMember=null;
 function localDateTimeValue(date){const d=new Date(date.getTime()-date.getTimezoneOffset()*60000);return d.toISOString().slice(0,16);}
 function showMemberManager(){document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));$("members-tab").classList.add("active");$("content-form-panel").classList.add("hidden");$("content-list-panel").classList.add("hidden");$("member-panel").classList.remove("hidden");$("form-title").textContent="会员管理";}
 async function searchMember(){const email=$("member-email-search").value.trim();if(!email){setStatus("member-search-status","请先填写用户注册邮箱。");return;}setStatus("member-search-status","正在查找账号……");$("member-search-results").innerHTML="";$("member-edit-area").classList.add("hidden");try{const {data,error}=await db.from("member_profiles").select("user_id,email,created_at").ilike("email",email).limit(10);if(error)throw error;if(!data||!data.length){setStatus("member-search-status","没有找到该邮箱对应的账号。请确认用户已经注册并完成邮箱验证，或检查邮箱是否拼写正确。");return;}$("member-search-results").innerHTML=data.map(u=>`<div class="item"><div><div class="item-title">${escapeHtml(u.email)}</div><div class="item-desc">用户 ID：${escapeHtml(u.user_id)}<br>注册时间：${u.created_at?new Date(u.created_at).toLocaleString("zh-CN"):"—"}</div></div><div class="item-actions"><button type="button" class="secondary" data-select-member="${escapeHtml(u.user_id)}">管理该用户</button></div></div>`).join("");setStatus("member-search-status",`找到 ${data.length} 个匹配账号。请选择要开通的用户。`);}catch(e){setStatus("member-search-status","查找失败："+(e.message||String(e))+"。请确认已执行会员权限 SQL。");}}
-async function selectMember(userId){const {data:user,error:userError}=await db.from("member_profiles").select("user_id,email").eq("user_id",userId).single();if(userError){setStatus("member-status",userError.message);return;}selectedMember=user;$("member-user-id").value=user.user_id;$("member-selected-title").textContent="会员权益设置 · "+user.email;const {data:ent,error}=await db.from("memberships").select("status,starts_at,expires_at,note").eq("user_id",user.user_id).maybeSingle();if(error){setStatus("member-status",error.message);return;}const now=new Date();$("member-start").value=ent?.starts_at?localDateTimeValue(new Date(ent.starts_at)):localDateTimeValue(now);$("member-expiry").value=ent?.expires_at?localDateTimeValue(new Date(ent.expires_at)):localDateTimeValue(new Date(now.getTime()+365*24*60*60*1000));$("member-note").value=ent?.note||"";$("member-edit-area").classList.remove("hidden");setStatus("member-status",ent?`当前状态：${ent.status}；到期时间：${ent.expires_at?new Date(ent.expires_at).toLocaleString("zh-CN"):"未设置"}`:"该用户尚无会员记录。可以在核实付款后开通。");}
-async function saveMembership(revoke=false){if(!selectedMember){setStatus("member-status","请先查找并选择用户。");return;}const button=revoke?$("member-revoke-button") : $("member-grant-button");button.disabled=true;try{const start=$("member-start").value?new Date($("member-start").value).toISOString():new Date().toISOString();const expiry=$("member-expiry").value?new Date($("member-expiry").value).toISOString():null;if(!expiry)throw new Error("请设置会员到期时间。");if(!revoke&&new Date(expiry)<=new Date(start))throw new Error("到期时间必须晚于开通时间。");const payload={user_id:selectedMember.user_id,status:revoke?"inactive":"active",starts_at:start,expires_at:expiry,note:$("member-note").value.trim()||null,granted_by:(await db.auth.getUser()).data.user?.id||null,updated_at:new Date().toISOString()};const {error}=await db.from("memberships").upsert(payload,{onConflict:"user_id"});if(error)throw error;setStatus("member-status",revoke?"已停用该用户的会员资格。":"会员已开通/更新。该账号刷新后即可访问全部已配置的会员专享看板。", "success");}catch(e){setStatus("member-status","操作失败："+(e.message||String(e)));}finally{button.disabled=false;}}
+async function selectMember(userId){const {data:user,error:userError}=await db.from("member_profiles").select("user_id,email").eq("user_id",userId).single();if(userError){setStatus("member-status",userError.message);return;}selectedMember=user;$("member-user-id").value=user.user_id;$("member-selected-title").textContent="会员权益设置 · "+user.email;const {data:ent,error}=await db.from("member_entitlements").select("status,starts_at,expires_at,note").eq("user_id",user.user_id).maybeSingle();if(error){setStatus("member-status",error.message);return;}const now=new Date();$("member-start").value=ent?.starts_at?localDateTimeValue(new Date(ent.starts_at)):localDateTimeValue(now);$("member-expiry").value=ent?.expires_at?localDateTimeValue(new Date(ent.expires_at)):localDateTimeValue(new Date(now.getTime()+365*24*60*60*1000));$("member-note").value=ent?.note||"";$("member-edit-area").classList.remove("hidden");setStatus("member-status",ent?`当前状态：${ent.status}；到期时间：${ent.expires_at?new Date(ent.expires_at).toLocaleString("zh-CN"):"未设置"}`:"该用户尚无会员记录。可以在核实付款后开通。");}
+async function saveMembership(revoke=false){if(!selectedMember){setStatus("member-status","请先查找并选择用户。");return;}const button=revoke?$("member-revoke-button") : $("member-grant-button");button.disabled=true;try{const start=$("member-start").value?new Date($("member-start").value).toISOString():new Date().toISOString();const expiry=$("member-expiry").value?new Date($("member-expiry").value).toISOString():null;if(!revoke&&expiry&&new Date(expiry)<=new Date(start))throw new Error("到期时间必须晚于开通时间。");const payload={user_id:selectedMember.user_id,status:revoke?"revoked":"active",starts_at:start,expires_at:expiry,note:$("member-note").value.trim()||null,granted_by:(await db.auth.getUser()).data.user?.id||null,updated_at:new Date().toISOString()};const {error}=await db.from("member_entitlements").upsert(payload,{onConflict:"user_id"});if(error)throw error;setStatus("member-status",revoke?"已撤销该用户的会员权限。":"会员已开通/更新。该账号刷新后即可访问全部已配置的会员专享看板。", "success");}catch(e){setStatus("member-status","操作失败："+(e.message||String(e)));}finally{button.disabled=false;}}
 $("members-tab").addEventListener("click",showMemberManager);$("member-search-button").addEventListener("click",searchMember);$("member-email-search").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchMember();}});$("member-search-results").addEventListener("click",e=>{const b=e.target.closest("[data-select-member]");if(b)selectMember(b.dataset.selectMember);});$("member-grant-button").addEventListener("click",()=>saveMembership(false));$("member-revoke-button").addEventListener("click",()=>{if(confirm("确定撤销该用户的会员权限吗？"))saveMembership(true);});
 
 $("login-form").addEventListener("submit",async e=>{
@@ -399,26 +405,33 @@ $("login-form").addEventListener("submit",async e=>{
 });
 async function enterAdmin(user){
   $("login-panel").classList.add("hidden");
-  $("admin-panel").classList.remove("hidden");
-  $("whoami").textContent="已登录："+user.email;
-  setStatus("admin-status","正在检查管理员权限并加载数据……");
+  $("admin-panel").classList.add("hidden");
+  $("denied-panel").classList.add("hidden");
   try{
-    const {data,error}=await db.from("countries").select("id").limit(1);
-    if(error)throw error;
     const {data:admin,error:adminError}=await db.rpc("is_admin");
     if(adminError)throw adminError;
-    if(!admin)throw new Error("当前账号没有管理员权限，请检查 Supabase admin_users 配置。");
+    if(admin!==true){
+      $("denied-panel").classList.remove("hidden");
+      return;
+    }
+    $("admin-panel").classList.remove("hidden");
+    $("whoami").textContent="已登录："+user.email;
+    setStatus("admin-status","管理员验证成功，正在加载管理数据……");
+    const {error}=await db.from("countries").select("id").limit(1);
+    if(error)throw error;
     await refreshData();
     setStatus("admin-status","管理员验证成功。可以开始管理内容。");
   }catch(e){
-    setStatus("admin-status","后台加载失败："+(e.message||String(e))+"\n请确认该账号已加入 admin_users，且数据库权限策略配置正确。");
+    $("admin-panel").classList.add("hidden");
+    $("denied-panel").classList.remove("hidden");
+    const p=$("denied-panel").querySelector("p");
+    if(p)p.textContent="暂时无法验证管理员权限。请确认管理员配置后重试；普通会员不能访问管理功能。";
+    console.error("Admin authorization check failed:",e);
   }
 }
-$("logout").addEventListener("click",async()=>{
-  await db.auth.signOut();
-  $("admin-panel").classList.add("hidden");$("login-panel").classList.remove("hidden");
-  setStatus("login-status","已退出登录。");
-});
+async function logoutAdmin(){await db.auth.signOut();$("admin-panel").classList.add("hidden");$("denied-panel").classList.add("hidden");$("login-panel").classList.remove("hidden");setStatus("login-status","已退出登录。");}
+$("logout").addEventListener("click",logoutAdmin);
+$("denied-logout").addEventListener("click",logoutAdmin);
 $("tabs").addEventListener("click",e=>{
   const b=e.target.closest("button[data-type]");if(b)showType(b.dataset.type);
 });
