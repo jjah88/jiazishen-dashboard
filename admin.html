@@ -64,12 +64,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <div id="login-status" class="status"></div>
   </section>
 
-  <section id="denied-panel" class="panel hidden" style="max-width:620px;margin:30px auto;text-align:center;padding:34px 24px">
-    <div style="font-size:12px;letter-spacing:2px;color:#58718a">JIAZISHEN · ACCESS CONTROL</div>
-    <h2 style="margin:14px 0 8px">无权访问管理后台</h2>
-    <p style="font-size:14px;line-height:1.8;color:#6b7a8c;margin:0 0 20px">此页面仅向甲子申管理员开放。你的账号可以继续浏览已授权的看板。</p>
-    <div class="actions" style="justify-content:center"><a href="./" style="display:inline-block;padding:10px 16px;border:1px solid #244f78;border-radius:6px;color:#244f78;font-size:13px">返回首页</a><button type="button" id="denied-logout" class="secondary">退出登录</button></div>
-  </section>
   <section id="admin-panel" class="hidden">
     <div class="panel">
       <div class="row" style="align-items:center">
@@ -89,6 +83,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
         <button type="button" data-type="industries">产业领域</button>
         <button type="button" data-type="demos">研究看板</button>
         <button type="button" data-type="topics">专题研究</button>
+        <button type="button" id="ai-updates-tab" class="secondary">AI看板更新</button>
         <button type="button" id="members-tab" class="secondary">会员管理</button>
       </div>
       <div class="notice">新增或编辑内容后点击保存。取消“公开发布”后，该条目不会出现在公开首页。删除操作不可撤销；国家或产业若仍被看板引用，需要先调整关联关系。</div>
@@ -160,6 +155,35 @@ button:disabled{opacity:.5;cursor:not-allowed}
     <div class="panel" id="content-list-panel">
       <h2 id="list-title">国家市场列表</h2>
       <div id="record-list" class="list"></div>
+    </div>
+
+
+
+    <div class="panel hidden" id="ai-updates-panel">
+      <h2>AI 看板更新工作台</h2>
+      <div class="notice">通用工作流：按国家和产业生成候选 HTML，保存到私有 Storage，人工预览后发布。首次使用前需执行随包 SQL，并部署 Edge Functions、配置模型/搜索 API 密钥。这里不会直接修改线上正式版本。</div>
+      <div class="row">
+        <div><label for="ai-country">国家 / 市场</label><input id="ai-country" value="埃及" placeholder="例如：埃及、沙特阿拉伯"></div>
+        <div><label for="ai-industry">产业</label><input id="ai-industry" value="新能源" placeholder="例如：新能源、储能、光伏"></div>
+      </div>
+      <div class="row">
+        <div><label for="ai-demo">关联现有看板（可选）</label><select id="ai-demo"><option value="">自动新建看板草稿</option></select></div>
+        <div><label for="ai-frequency">自动更新频率</label><select id="ai-frequency"><option value="weekly">每周</option><option value="daily">每天</option><option value="biweekly">每两周</option><option value="monthly">每月</option><option value="manual">仅手动</option></select></div>
+      </div>
+      <label for="ai-template-path">模板 HTML 的私有 Storage 路径</label><input id="ai-template-path" value="egypt-renewable-20261009.html" placeholder="例如：egypt-renewable-20261009.html">
+      <label for="ai-notes">额外研究要求（选填）</label><textarea id="ai-notes" placeholder="例如：重点关注政策变化、招标项目、贸易数据和市场准入；重要结论至少两个独立来源"></textarea>
+      <div class="actions"><button id="ai-save-config" type="button">保存 / 新增自动更新配置</button><button id="ai-run-now" type="button" class="secondary">立即生成一版草稿</button></div>
+      <div id="ai-config-status" class="status"></div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:22px 0">
+      <div class="row" style="align-items:center"><div><h3 style="margin:0">待更新列表</h3><div class="sub">候选版本不会自动替换正式版本。</div></div><div class="actions"><button type="button" id="ai-refresh" class="secondary">刷新列表</button></div></div>
+      <div id="ai-draft-list" class="list" style="margin-top:12px"></div>
+      <div id="ai-preview-area" class="hidden" style="margin-top:16px">
+        <h3 id="ai-preview-title">候选版本预览</h3>
+        <div class="notice" id="ai-preview-meta"></div>
+        <iframe id="ai-preview-frame" title="AI候选看板预览" sandbox="allow-scripts allow-forms allow-popups" style="width:100%;height:620px;border:1px solid var(--line);border-radius:8px;background:#fff"></iframe>
+        <div class="actions" style="margin-top:12px"><button type="button" id="ai-publish-button">确认无误，一键发布</button><button type="button" id="ai-reject-button" class="danger">退回 / 删除候选版本</button></div>
+        <div id="ai-publish-status" class="status"></div>
+      </div>
     </div>
 
     <div class="panel hidden" id="member-panel">
@@ -251,6 +275,7 @@ function resetForm(){
   $("tags").value="";
 }
 function showType(type){
+  $("ai-updates-panel").classList.add("hidden"); $("ai-updates-tab").classList.remove("active");
   currentType=type;
   document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.type===type));
   $("country-fields").classList.toggle("hidden",type!=="countries");
@@ -389,9 +414,112 @@ async function deleteRecord(id){
   try{await refreshData();setStatus("admin-status","删除成功。");}
   catch(e){setStatus("admin-status","删除完成，但刷新列表失败："+e.message);}
 }
+
+// AI dashboard workflow: admin-only UI; privileged actions execute in Supabase Edge Functions.
+let aiSelectedDraft = null;
+function showAiUpdates(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));
+  $("ai-updates-tab").classList.add("active");
+  $("content-form-panel").classList.add("hidden");
+  $("content-list-panel").classList.add("hidden");
+  $("member-panel").classList.add("hidden");
+  $("ai-updates-panel").classList.remove("hidden");
+  refreshAiDemos(); refreshAiDrafts();
+}
+async function refreshAiDemos(){
+  const sel=$("ai-demo"); const old=sel.value;
+  sel.innerHTML='<option value="">自动新建看板草稿</option>'+cache.demos.map(d=>`<option value="${escapeHtml(d.id)}">${escapeHtml(d.name)}</option>`).join("");
+  if(old)sel.value=old;
+  else {
+    const preferred=cache.demos.find(d=>{
+      const c=cache.countries.find(x=>x.id===d.country_id),i=cache.industries.find(x=>x.id===d.industry_id);
+      return /埃及|Egypt/i.test(c?.name||"") && /新能源|可再生能源|Renewable/i.test(i?.name||"");
+    });
+    if(preferred){sel.value=preferred.id;const c=cache.countries.find(x=>x.id===preferred.country_id),i=cache.industries.find(x=>x.id===preferred.industry_id);if(c)$("ai-country").value=c.name;if(i)$("ai-industry").value=i.name;if(preferred.private_path)$("ai-template-path").value=preferred.private_path;}
+  }
+}
+async function aiCall(name,body){
+  const {data:{session}}=await db.auth.getSession();
+  if(!session)throw new Error("登录状态已失效，请重新登录。");
+  const {data,error}=await db.functions.invoke(name,{body});
+  if(error) {
+    let msg=error.message||String(error);
+    try{if(error.context?.json){const j=await error.context.json();msg=j.error||msg;}}catch{}
+    throw new Error(msg);
+  }
+  if(data?.error)throw new Error(data.error);
+  return data;
+}
+async function saveAiConfig(runNow=false){
+  const country=$("ai-country").value.trim(),industry=$("ai-industry").value.trim();
+  if(!country||!industry){setStatus("ai-config-status","请填写国家和产业。");return;}
+  const payload={country_name:country,industry_name:industry,demo_id:$("ai-demo").value||null,template_path:$("ai-template-path").value.trim(),notes:$("ai-notes").value.trim(),frequency:$("ai-frequency").value,enabled:true};
+  if(!payload.template_path) {setStatus("ai-config-status","请填写模板 HTML 的私有 Storage 路径。");return;}
+  try{
+    setStatus("ai-config-status",runNow?"正在生成候选版本……":"正在保存配置……");
+    const result=runNow?await aiCall("generate-dashboard-update",payload):await aiCall("generate-dashboard-update",{...payload,save_config_only:true});
+    setStatus("ai-config-status",runNow?("已生成候选版本："+(result.filename||result.version_id||"请查看待更新列表")):"配置已保存。部署完成后，全局定时任务将按频率扫描到期看板。");
+    await refreshAiDrafts();
+  }catch(e){setStatus("ai-config-status","操作失败："+e.message);}
+}
+async function refreshAiDrafts(){
+  const el=$("ai-draft-list");el.innerHTML='<div class="sub">正在读取……</div>';
+  try{
+    const {data,error}=await db.from("dashboard_update_versions").select("id,country_name,industry_name,filename,status,created_at,research_summary,sources,demo_id,candidate_path").in("status",["pending","failed","rejected"]).order("created_at",{ascending:false}).limit(50);
+    if(error)throw error;
+    if(!data?.length){el.innerHTML='<div class="empty">暂无待更新版本。可以先保存配置，再点击“立即生成一版草稿”。</div>';return;}
+    el.innerHTML=data.map(d=>`<div class="item"><div><div class="item-title">${escapeHtml(d.country_name)} · ${escapeHtml(d.industry_name)} <span style="font-size:12px;color:#8b6a31">（${escapeHtml(d.status)}）</span></div><div class="item-desc">${escapeHtml(d.filename||"候选版本")}<br>${escapeHtml(d.created_at?new Date(d.created_at).toLocaleString("zh-CN"):"")}<br>${escapeHtml(d.research_summary||"暂无摘要")}</div></div><div class="item-actions"><button type="button" class="secondary" data-ai-preview="${escapeHtml(d.id)}">预览 / 验证</button></div></div>`).join("");
+    el.querySelectorAll("[data-ai-preview]").forEach(b=>b.addEventListener("click",()=>selectAiDraft(data.find(x=>x.id===b.dataset.aiPreview))));
+  }catch(e){el.innerHTML=`<div class="notice">读取待更新列表失败：${escapeHtml(e.message)}。请先执行 SQL 并配置 RLS。</div>`;}
+}
+async function selectAiDraft(d){
+  if(!d)return;aiSelectedDraft=d;
+  $("ai-preview-area").classList.remove("hidden");
+  $("ai-preview-title").textContent=`候选版本：${d.filename||d.country_name+"-"+d.industry_name}`;
+  const sources=Array.isArray(d.sources)?d.sources:[];
+  $("ai-preview-meta").textContent=`国家：${d.country_name}；产业：${d.industry_name}；状态：${d.status}；来源记录：${sources.length} 条。请重点检查来源、日期、数字和页面交互。`;
+  $("ai-preview-frame").src="about:blank";
+  try{
+    const result=await aiCall("publish-dashboard-update",{action:"preview",version_id:d.id});
+    if(!result.preview_url)throw new Error("未返回预览地址");
+    $("ai-preview-frame").src=result.preview_url;
+    setStatus("ai-publish-status","候选版本已加载。确认来源和页面无误后，再点击一键发布。");
+  }catch(e){setStatus("ai-publish-status","无法生成预览链接："+e.message);}
+}
+async function publishAiDraft(){
+  if(!aiSelectedDraft)return;
+  if(!confirm("确认发布该候选版本？系统会自动匹配/创建国家与产业标签，保留旧版本，并切换正式看板。"))return;
+  try{
+    $("ai-publish-button").disabled=true;setStatus("ai-publish-status","正在备份旧版并发布……");
+    const result=await aiCall("publish-dashboard-update",{action:"publish",version_id:aiSelectedDraft.id});
+    setStatus("ai-publish-status","发布成功："+(result.demo_name||"看板已更新")+"。旧版已保留，可在版本记录中回滚。");
+    aiSelectedDraft=null;await refreshData();await refreshAiDrafts();
+  }catch(e){setStatus("ai-publish-status","发布失败，正式版本应保持不变："+e.message);}
+  finally{$("ai-publish-button").disabled=false;}
+}
+async function rejectAiDraft(){
+  if(!aiSelectedDraft||!confirm("确定将该候选版本标记为退回？正式版本不会改变。"))return;
+  try{await aiCall("publish-dashboard-update",{action:"reject",version_id:aiSelectedDraft.id});setStatus("ai-publish-status","候选版本已退回，正式版本未改变。");aiSelectedDraft=null; $("ai-preview-area").classList.add("hidden");await refreshAiDrafts();}
+  catch(e){setStatus("ai-publish-status","操作失败："+e.message);}
+}
+$("ai-updates-tab").addEventListener("click",showAiUpdates);
+$("ai-demo").addEventListener("change",()=>{
+  const d=cache.demos.find(x=>x.id===$("ai-demo").value);
+  if(!d)return;
+  const c=cache.countries.find(x=>x.id===d.country_id),i=cache.industries.find(x=>x.id===d.industry_id);
+  if(c)$("ai-country").value=c.name;
+  if(i)$("ai-industry").value=i.name;
+  if(d.private_path)$("ai-template-path").value=d.private_path;
+});
+$("ai-save-config").addEventListener("click",()=>saveAiConfig(false));
+$("ai-run-now").addEventListener("click",()=>saveAiConfig(true));
+$("ai-refresh").addEventListener("click",refreshAiDrafts);
+$("ai-publish-button").addEventListener("click",publishAiDraft);
+$("ai-reject-button").addEventListener("click",rejectAiDraft);
+
 let selectedMember=null;
 function localDateTimeValue(date){const d=new Date(date.getTime()-date.getTimezoneOffset()*60000);return d.toISOString().slice(0,16);}
-function showMemberManager(){document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));$("members-tab").classList.add("active");$("content-form-panel").classList.add("hidden");$("content-list-panel").classList.add("hidden");$("member-panel").classList.remove("hidden");$("form-title").textContent="会员管理";}
+function showMemberManager(){$("ai-updates-panel").classList.add("hidden");$("ai-updates-tab").classList.remove("active");document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));$("members-tab").classList.add("active");$("content-form-panel").classList.add("hidden");$("content-list-panel").classList.add("hidden");$("member-panel").classList.remove("hidden");$("form-title").textContent="会员管理";}
 async function searchMember(){const email=$("member-email-search").value.trim();if(!email){setStatus("member-search-status","请先填写用户注册邮箱。");return;}setStatus("member-search-status","正在查找账号……");$("member-search-results").innerHTML="";$("member-edit-area").classList.add("hidden");try{const {data,error}=await db.from("member_profiles").select("user_id,email,created_at").ilike("email",email).limit(10);if(error)throw error;if(!data||!data.length){setStatus("member-search-status","没有找到该邮箱对应的账号。请确认用户已经注册并完成邮箱验证，或检查邮箱是否拼写正确。");return;}$("member-search-results").innerHTML=data.map(u=>`<div class="item"><div><div class="item-title">${escapeHtml(u.email)}</div><div class="item-desc">用户 ID：${escapeHtml(u.user_id)}<br>注册时间：${u.created_at?new Date(u.created_at).toLocaleString("zh-CN"):"—"}</div></div><div class="item-actions"><button type="button" class="secondary" data-select-member="${escapeHtml(u.user_id)}">管理该用户</button></div></div>`).join("");setStatus("member-search-status",`找到 ${data.length} 个匹配账号。请选择要开通的用户。`);}catch(e){setStatus("member-search-status","查找失败："+(e.message||String(e))+"。请确认已执行会员权限 SQL。");}}
 async function selectMember(userId){const {data:user,error:userError}=await db.from("member_profiles").select("user_id,email").eq("user_id",userId).single();if(userError){setStatus("member-status",userError.message);return;}selectedMember=user;$("member-user-id").value=user.user_id;$("member-selected-title").textContent="会员权益设置 · "+user.email;const {data:ent,error}=await db.from("member_entitlements").select("status,starts_at,expires_at,note").eq("user_id",user.user_id).maybeSingle();if(error){setStatus("member-status",error.message);return;}const now=new Date();$("member-start").value=ent?.starts_at?localDateTimeValue(new Date(ent.starts_at)):localDateTimeValue(now);$("member-expiry").value=ent?.expires_at?localDateTimeValue(new Date(ent.expires_at)):localDateTimeValue(new Date(now.getTime()+365*24*60*60*1000));$("member-note").value=ent?.note||"";$("member-edit-area").classList.remove("hidden");setStatus("member-status",ent?`当前状态：${ent.status}；到期时间：${ent.expires_at?new Date(ent.expires_at).toLocaleString("zh-CN"):"未设置"}`:"该用户尚无会员记录。可以在核实付款后开通。");}
 async function saveMembership(revoke=false){if(!selectedMember){setStatus("member-status","请先查找并选择用户。");return;}const button=revoke?$("member-revoke-button") : $("member-grant-button");button.disabled=true;try{const start=$("member-start").value?new Date($("member-start").value).toISOString():new Date().toISOString();const expiry=$("member-expiry").value?new Date($("member-expiry").value).toISOString():null;if(!revoke&&expiry&&new Date(expiry)<=new Date(start))throw new Error("到期时间必须晚于开通时间。");const payload={user_id:selectedMember.user_id,status:revoke?"revoked":"active",starts_at:start,expires_at:expiry,note:$("member-note").value.trim()||null,granted_by:(await db.auth.getUser()).data.user?.id||null,updated_at:new Date().toISOString()};const {error}=await db.from("member_entitlements").upsert(payload,{onConflict:"user_id"});if(error)throw error;setStatus("member-status",revoke?"已撤销该用户的会员权限。":"会员已开通/更新。该账号刷新后即可访问全部已配置的会员专享看板。", "success");}catch(e){setStatus("member-status","操作失败："+(e.message||String(e)));}finally{button.disabled=false;}}
@@ -405,33 +533,26 @@ $("login-form").addEventListener("submit",async e=>{
 });
 async function enterAdmin(user){
   $("login-panel").classList.add("hidden");
-  $("admin-panel").classList.add("hidden");
-  $("denied-panel").classList.add("hidden");
+  $("admin-panel").classList.remove("hidden");
+  $("whoami").textContent="已登录："+user.email;
+  setStatus("admin-status","正在检查管理员权限并加载数据……");
   try{
+    const {data,error}=await db.from("countries").select("id").limit(1);
+    if(error)throw error;
     const {data:admin,error:adminError}=await db.rpc("is_admin");
     if(adminError)throw adminError;
-    if(admin!==true){
-      $("denied-panel").classList.remove("hidden");
-      return;
-    }
-    $("admin-panel").classList.remove("hidden");
-    $("whoami").textContent="已登录："+user.email;
-    setStatus("admin-status","管理员验证成功，正在加载管理数据……");
-    const {error}=await db.from("countries").select("id").limit(1);
-    if(error)throw error;
+    if(!admin)throw new Error("当前账号没有管理员权限，请检查 Supabase admin_users 配置。");
     await refreshData();
     setStatus("admin-status","管理员验证成功。可以开始管理内容。");
   }catch(e){
-    $("admin-panel").classList.add("hidden");
-    $("denied-panel").classList.remove("hidden");
-    const p=$("denied-panel").querySelector("p");
-    if(p)p.textContent="暂时无法验证管理员权限。请确认管理员配置后重试；普通会员不能访问管理功能。";
-    console.error("Admin authorization check failed:",e);
+    setStatus("admin-status","后台加载失败："+(e.message||String(e))+"\n请确认该账号已加入 admin_users，且数据库权限策略配置正确。");
   }
 }
-async function logoutAdmin(){await db.auth.signOut();$("admin-panel").classList.add("hidden");$("denied-panel").classList.add("hidden");$("login-panel").classList.remove("hidden");setStatus("login-status","已退出登录。");}
-$("logout").addEventListener("click",logoutAdmin);
-$("denied-logout").addEventListener("click",logoutAdmin);
+$("logout").addEventListener("click",async()=>{
+  await db.auth.signOut();
+  $("admin-panel").classList.add("hidden");$("login-panel").classList.remove("hidden");
+  setStatus("login-status","已退出登录。");
+});
 $("tabs").addEventListener("click",e=>{
   const b=e.target.closest("button[data-type]");if(b)showType(b.dataset.type);
 });
