@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<meta name="jiazishen-admin-build" content="public-html-utf8-normalize-20261013">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理后台｜甲子申产业出海看板</title>
@@ -39,6 +40,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .notice{background:#f3f6f9;border-radius:6px;padding:12px;font-size:13px;line-height:1.7;color:#536579;margin-bottom:16px}
 .hidden{display:none!important}
 @media(max-width:650px){main{padding:0 12px 30px}.top{padding:20px 14px}.row{grid-template-columns:1fr}.panel{padding:16px}.item{align-items:flex-start;flex-direction:column}.item-actions{width:100%}}
+
+/* page_url is a compatibility field only; the admin never enters a public URL manually. */
+#page_url{display:none!important}
 </style>
 </head>
 <body>
@@ -123,11 +127,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <div><label for="access_mode">访问方式</label><select id="access_mode"><option value="semi">半公开：游客预览，会员查看完整内容</option><option value="public">完全公开</option></select></div>
             <div><label for="preview_percent">预览遮挡位置（20–70%）</label><input id="preview_percent" type="number" min="20" max="70" value="45"></div>
           </div>
-          <input id="page_url" type="hidden"><input id="private_path" type="hidden"><input id="preview_url" type="hidden">
+          <input id="page_url" type="hidden" aria-hidden="true" tabindex="-1">
           <div id="private-dashboard-upload-panel" style="margin-top:14px;padding:14px;border:1px solid #e2e8ef;border-radius:8px;background:#f8fafb">
-            <label for="private-dashboard-file">看板 HTML 文件</label>
-            <div class="actions" style="margin-top:8px"><button type="button" id="upload-private-dashboard-button" class="secondary">选择 HTML 并上传</button><input id="private-dashboard-file" type="file" accept=".html,text/html" class="hidden"><span id="private-dashboard-upload-status" class="sub" style="align-self:center"></span></div>
-            <div class="sub" style="margin-top:7px;line-height:1.8">只需上传一次，系统按访问方式自动处理：完全公开→上传到公开存储并自动读取网址；半公开→完整文件存入私有存储，并自动生成游客预览文件。半公开 HTML 必须用 <code>data-member-only</code> 标记会员专属内容，例如 <code>&lt;section data-member-only&gt;会员内容&lt;/section&gt;</code>；生成游客版时会移除这些区块。如果未标记会员专属内容，系统会拒绝生成预览，避免误把完整内容公开。建议使用自包含 HTML（图片、CSS、数据内嵌或使用 CDN）。</div>
+            <label for="private_path">完整看板 HTML（一次上传，后续可切换访问方式）</label><input id="private_path" type="text" readonly placeholder="上传完整 HTML 后自动填入私有文件路径">
+            <div class="actions" style="margin-top:8px"><button type="button" id="upload-private-dashboard-button" class="secondary">上传看板 HTML（仅此一个上传按钮）</button><input id="private-dashboard-file" type="file" accept=".html,text/html" class="hidden"><span id="private-dashboard-upload-status" class="sub" style="align-self:center"></span></div>
+            <input id="preview_url" type="url" class="hidden" aria-hidden="true" tabindex="-1">
+            <div class="sub" style="margin-top:8px;line-height:1.7">只需上传一次。系统始终保留一份私有完整版；选择“完全公开”时自动发布公开副本，选择“半公开”时游客只看到本页面生成的安全预览，会员通过服务端验证查看完整版。以后可直接切换访问方式，无需重新选择文件。</div>
           </div>
           <div class="row">
             <div>
@@ -204,62 +209,168 @@ function setBusy(b){$("save-button").disabled=b;}
 const QR_BUCKET = "consultation-qr";
 const PRIVATE_DASHBOARD_BUCKET = "private-dashboards";
 const PUBLIC_DASHBOARD_BUCKET = "dashboard-previews";
+function buildSafePreviewHtml(sourceHtml, fileName, previewPercent){
+  // Generate a separate, static preview from the real dashboard's upper sections.
+  // All scripts and later sections are physically removed before publishing, not merely covered by a gate.
+  const parsed = new DOMParser().parseFromString(String(sourceHtml||""), "text/html");
+  parsed.querySelectorAll("script,noscript,iframe,object,embed,form,base,meta[http-equiv='refresh'],meta[http-equiv='Content-Security-Policy']").forEach(el=>el.remove());
+  parsed.querySelectorAll("[hidden],[aria-hidden='true'],.tab-pane:not(.active),.tab-content:not(.active),.tab-panel:not(.active),.hidden").forEach(el=>el.remove());
+  for(const el of [...parsed.querySelectorAll("*")]){
+    for(const attr of [...el.attributes]){
+      const n=attr.name.toLowerCase();
+      if(n.startsWith("on") || n==="srcdoc" || n.startsWith("data-private") || n==="data-full-content") el.removeAttribute(attr.name);
+      if((n==="href"||n==="src"||n==="action") && /^\s*javascript:/i.test(attr.value)) el.removeAttribute(attr.name);
+    }
+  }
+  // Remove external scripts/styles to keep the preview static and avoid CSP-dependent behavior.
+  parsed.querySelectorAll("link[rel='preload'][as='script'],script").forEach(el=>el.remove());
+  const candidates=[...parsed.querySelectorAll("main,.wrap,.container,.page,#app,body")];
+  const contentScore=el=>[...el.children].filter(c=>c.matches("section,article")||c.classList.contains("hero")||c.classList.contains("section")||c.classList.contains("panel")).length;
+  let container=candidates.sort((a,b)=>contentScore(b)-contentScore(a))[0]||parsed.body;
+  // If a generic template has no obvious section wrapper, keep its first few visible content blocks.
+  let blocks=[...container.children].filter(c=>c.matches("section,article")||c.classList.contains("hero")||c.classList.contains("section")||c.classList.contains("panel"));
+  if(!blocks.length){
+    const main=parsed.querySelector("main")||parsed.body;
+    container=main;
+    blocks=[...container.children].filter(c=>!['SCRIPT','STYLE','LINK','META'].includes(c.tagName));
+  }
+  const pct=Math.max(20,Math.min(70,Number(previewPercent)||45));
+  const keepCount=Math.min(blocks.length,Math.max(1,Math.ceil(blocks.length*pct/100))); // retain the selected 20–70% of the real content blocks
+  if(blocks.length){
+    const lastKept=blocks[keepCount-1];
+    let removeFollowing=false;
+    for(const child of [...container.children]){
+      if(child===lastKept){removeFollowing=true;continue;}
+      if(removeFollowing) child.remove();
+      else if(blocks.includes(child) && blocks.indexOf(child)>=keepCount) child.remove();
+    }
+    // Avoid publishing hidden or alternate-tab content elsewhere in the truncated container.
+    container.querySelectorAll("[hidden],.tab-pane:not(.active),.tab-content:not(.active),.tab-panel:not(.active),.hidden").forEach(el=>el.remove());
+  }
+  // Add a clear end to the excerpt. This is part of the generated public preview, not the private source.
+  const endCard=parsed.createElement("section");
+  endCard.setAttribute("style","margin:24px auto;padding:18px 22px;max-width:1100px;background:#edf2f6;border-left:4px solid #c5a46a;color:#30485e;font:14px/1.8 -apple-system,BlinkMacSystemFont,Segoe UI,Microsoft YaHei,sans-serif");
+  endCard.textContent="以上为产业看板公开预览节选。完整市场数据、详细研判、项目资料及企业名录仅向通过服务端验证的有效会员开放。";
+  (container||parsed.body).appendChild(endCard);
+  parsed.documentElement.lang="zh-CN";
+  let charset=parsed.querySelector("meta[charset]");
+  if(!charset){charset=parsed.createElement("meta");charset.setAttribute("charset","utf-8");parsed.head.prepend(charset);}else charset.setAttribute("charset","utf-8");
+  let viewport=parsed.querySelector("meta[name='viewport']");
+  if(!viewport){viewport=parsed.createElement("meta");viewport.name="viewport";viewport.content="width=device-width,initial-scale=1";parsed.head.appendChild(viewport);}
+  const title=parsed.querySelector("title")||parsed.head.appendChild(parsed.createElement("title"));
+  title.textContent=($('name').value.trim()||title.textContent||String(fileName||'产业研究看板').replace(/\.html?$/i,''))+"｜游客预览";
+  return "<!doctype html>\n"+parsed.documentElement.outerHTML;
+}
+function publicObjectPathFromUrl(url){
+  try{
+    const u=new URL(url);
+    if(u.origin!==new URL(SUPABASE_URL).origin)return null;
+    const marker=`/storage/v1/object/public/${PUBLIC_DASHBOARD_BUCKET}/`;
+    const at=u.pathname.indexOf(marker);
+    if(at<0)return null;
+    const p=decodeURIComponent(u.pathname.slice(at+marker.length));
+    return (p.startsWith("public/boards/")||p.startsWith("boards/"))?p:null;
+  }catch{return null;}
+}
+function normalizeHtmlToUtf8(bytes){
+  const raw = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  // Read the ASCII-compatible head first so we can honor a legacy charset declaration.
+  const headProbe = new TextDecoder("windows-1252").decode(raw.slice(0, 8192));
+  const charsetMatch = headProbe.match(/<meta[^>]+charset\s*=\s*["']?\s*([\w.-]+)/i)
+    || headProbe.match(/<meta[^>]+content\s*=\s*["'][^"']*charset\s*=\s*([\w.-]+)/i);
+  const declared = (charsetMatch?.[1] || "").toLowerCase();
+  let html = "";
+  // Keep valid UTF-8 unchanged. If the file is legacy Chinese encoding, decode it before
+  // re-encoding; this avoids browsers interpreting GBK bytes as UTF-8 and showing mojibake.
+  try {
+    html = new TextDecoder("utf-8", {fatal:true}).decode(raw);
+  } catch (_) {
+    let label = /^(gb2312|gbk|gb18030|big5|windows-1252|iso-8859-1)$/.test(declared) ? declared : "gb18030";
+    try { html = new TextDecoder(label).decode(raw); }
+    catch (_) { html = new TextDecoder("gb18030").decode(raw); }
+  }
+  // Normalize any existing charset declarations, without DOM serialization (which could
+  // damage dashboard scripts, chart markup, or layout), and explicitly declare UTF-8.
+  html = html.replace(/<meta\b([^>]*\bcharset\s*=\s*["']?)[\w.-]+([^>]*)>/ig, '<meta$1utf-8$2>');
+  html = html.replace(/(<meta\b[^>]*http-equiv\s*=\s*["']?content-type["']?[^>]*content\s*=\s*["'][^"']*charset\s*=\s*)[\w.-]+/ig, '$1utf-8');
+  if (!/<meta\b[^>]*\bcharset\s*=/i.test(html)) {
+    if (/<head\b[^>]*>/i.test(html)) html = html.replace(/<head\b[^>]*>/i, m => m + '\n<meta charset="utf-8">');
+    else html = '<meta charset="utf-8">\n' + html;
+  }
+  return html;
+}
+async function publishBlobToPublic(blob,fileName){
+  const cleanName=String(fileName||"dashboard.html").replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
+  const publicPath=`public/boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${cleanName}`;
+  const bytes = await blob.arrayBuffer();
+  // Always resolve the normalizer result before passing it to Blob.
+  // If an older/deployed copy still exposes an async normalizer, this prevents
+  // the Promise object itself from being serialized as the page body.
+  let normalizedHtml = await Promise.resolve(normalizeHtmlToUtf8(bytes));
+  if (typeof normalizedHtml !== "string") {
+    throw new Error("公开发布失败：HTML 编码处理未返回文本，请重新覆盖上传最新 admin.html 后再发布。");
+  }
+  if (normalizedHtml.trim() === "[object Promise]") {
+    throw new Error("公开发布失败：编码处理结果仍是 Promise，请检查后台是否已更新到最新版本。");
+  }
+  const htmlBlob = new Blob([normalizedHtml], {type:"text/html;charset=utf-8"});
+  const {data,error}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(publicPath,htmlBlob,{cacheControl:"60",upsert:false,contentType:"text/html; charset=utf-8"});
+  if(error){
+    const detail=[error.message,error.error,error.statusCode,error.name].filter(Boolean).join(" | ");
+    throw new Error("上传到公开存储桶失败"+(error.statusCode?"（HTTP "+error.statusCode+"）":"")+"："+(detail||"未知存储错误")+"。请检查 dashboard-previews 桶的文件大小限制及管理员上传策略。原始错误："+JSON.stringify({statusCode:error.statusCode,error:error.error,message:error.message}));
+  }
+  const pub=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(data.path);
+  if(!pub.data?.publicUrl)throw new Error("公开副本已上传，但未能生成公开网址。");
+  return pub.data.publicUrl;
+}
+async function publishPrivateMaster(path){
+  if(!path)throw new Error("尚未上传完整版。请先使用唯一的上传按钮上传一次 HTML 文件。");
+  const {data:blob,error:downloadError}=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).download(path);
+  if(downloadError)throw new Error("切换为完全公开失败：管理员暂时无法读取私有完整版（"+(downloadError.message||"Storage 权限不足")+"）。请在 Supabase SQL Editor 执行修复包内 storage-admin-policies.sql 一次，然后重新点击“上传并发布看板”。文件不必重新上传。");
+  return await publishBlobToPublic(blob,path.split("/").pop()||"dashboard.html");
+}
+async function publishPreviewFromPrivateMaster(path){
+  if(!path)throw new Error("无法生成游客预览：找不到私有完整版路径。");
+  const {data:blob,error}=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).download(path);
+  if(error)throw new Error("无法读取私有完整版以生成游客预览："+(error.message||"Storage 权限不足"));
+  const source=await blob.text();
+  const previewHtml=buildSafePreviewHtml(source,path.split("/").pop()||"dashboard.html",Number($("preview_percent").value)||45);
+  const previewBlob=new Blob([previewHtml],{type:"text/html;charset=utf-8"});
+  return await publishBlobToPublic(previewBlob,"visitor-preview.html");
+}
 async function uploadPrivateDashboard(file){
   if(!file)return;
   if(!file.name.toLowerCase().endsWith(".html") && file.type!=="text/html"){setStatus("private-dashboard-upload-status","请选择 .html 文件。");return;}
   if(file.size>20*1024*1024){setStatus("private-dashboard-upload-status","文件不能超过 20MB。");return;}
-  const button=$("upload-private-dashboard-button");button.disabled=true;setStatus("private-dashboard-upload-status","正在上传，请稍候……");
+  const button=$("upload-private-dashboard-button");button.disabled=true;
+  setStatus("private-dashboard-upload-status","正在上传：保存私有完整版，并按当前访问方式准备页面……");
   try{
     const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
     const path=`boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;
-    if($("access_mode").value==="public"){
-      const result=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(`public/${path}`,file,{cacheControl:"60",upsert:false,contentType:"text/html"});
-      if(result.error)throw result.error;
-      const pub=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(result.data.path);
-      if(!pub.data?.publicUrl)throw new Error("上传成功，但未能生成公开网址");
-      $("page_url").value=pub.data.publicUrl;$("private_path").value="";$("preview_url").value="";
-      setStatus("private-dashboard-upload-status","完全公开版已上传。网址已自动保存，发布时无需填写网址。");
-    }else{
-      const source=await file.text();
-      const doc=new DOMParser().parseFromString(source,"text/html");
-      const restricted=doc.querySelectorAll("[data-member-only]");
-      if(!restricted.length)throw new Error("半公开模式需要在完整 HTML 中用 data-member-only 标记会员专属区块。未找到标记，因此没有上传，避免把完整内容公开。");
-      restricted.forEach(el=>el.remove());
-      const previewHtml="<!DOCTYPE html>\n"+doc.documentElement.outerHTML;
-      const previewFile=new File([previewHtml],safeName.replace(/\.html?$/i,"-preview.html"),{type:"text/html"});
-      const privateResult=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"0",upsert:false,contentType:"text/html"});
-      if(privateResult.error)throw privateResult.error;
-      const previewPath=`previews/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName.replace(/\.html?$/i,"-preview.html")}`;
-      const previewResult=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(previewPath,previewFile,{cacheControl:"60",upsert:false,contentType:"text/html"});
-      if(previewResult.error)throw new Error("完整文件已安全上传，但预览版上传失败："+previewResult.error.message+"。请重试上传同一文件；不要将完整文件放入公开存储。");
-      const pub=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(previewResult.data.path);
-      if(!pub.data?.publicUrl)throw new Error("预览版上传成功，但未能生成公开网址");
-      $("private_path").value=privateResult.data.path;$("preview_url").value=pub.data.publicUrl;$("page_url").value="";
-      setStatus("private-dashboard-upload-status","半公开模式完成：完整 HTML 已存入私有存储，游客预览版已自动生成并上传。发布时无需再传第二个文件或填写网址。");
+    const htmlFileBlob = new Blob([await file.arrayBuffer()], {type:"text/html"});
+    const privateResult=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,htmlFileBlob,{cacheControl:"0",upsert:false,contentType:"text/html"});
+    if(privateResult.error)throw privateResult.error;
+    $("private_path").value=privateResult.data.path;
+    $("page_url").value="";
+    // Generate a real, static excerpt from the top of this same file. The user uploads only once.
+    try{
+      const previewHtml=buildSafePreviewHtml(await file.text(),file.name,Number($("preview_percent").value)||45);
+      const previewBlob=new Blob([previewHtml],{type:"text/html;charset=utf-8"});
+      $("preview_url").value=await publishBlobToPublic(previewBlob,"visitor-preview.html");
+      setStatus("private-dashboard-upload-status","上传完成：完整版已私有保存，游客预览已从真实看板头部自动生成。点击发布即可；以后切换访问方式无需重新上传。");
+    }catch(previewError){
+      console.error(previewError);
+      $("preview_url").value="";
+      setStatus("private-dashboard-upload-status","完整版已上传；自动生成游客预览未完成。点击发布时系统会再次尝试，不需要重新选择文件。原因："+(previewError.message||String(previewError)));
     }
-  }catch(e){console.error(e);setStatus("private-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认已执行最新权限 SQL，且对应存储桶已创建。");}
+  }catch(e){console.error(e);setStatus("private-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认私有存储桶的上传权限。");}
   finally{button.disabled=false;$("private-dashboard-file").value="";}
-}
-async function uploadPreviewDashboard(file){
-  if(!file)return;
-  if(!file.name.toLowerCase().endsWith(".html") && file.type!=="text/html"){setStatus("preview-dashboard-upload-status","请选择 .html 文件。");return;}
-  if(file.size>20*1024*1024){setStatus("preview-dashboard-upload-status","文件不能超过 20MB。");return;}
-  try{
-    const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"preview.html";
-    const path=`previews/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;
-    const result=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"60",upsert:false,contentType:"text/html"});
-    if(result.error)throw result.error;
-    const pub=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(result.data.path);
-    if(!pub.data?.publicUrl)throw new Error("上传成功，但未能生成预览网址");
-    $("preview_url").value=pub.data.publicUrl;
-    setStatus("preview-dashboard-upload-status","预览版已上传并填入网址。请确认该文件只包含允许游客查看的内容。");
-  }catch(e){console.error(e);setStatus("preview-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认已执行新的权限 SQL，并确认预览存储桶已创建。");}
 }
 function updateAccessModeUI(){
   const mode=$("access_mode").value;
   $("page_url").required=false;
   $("private-dashboard-upload-panel").style.borderColor=mode==="semi"?"#c5a46a":"#e2e8ef";
-  if(!$("private_path").value&&!$("page_url").value)setStatus("private-dashboard-upload-status",mode==="semi"?"半公开：只需上传一次 HTML，系统自动生成游客预览版。":"完全公开：只需上传一次 HTML，系统自动读取公开网址。");
+  $("private-dashboard-upload-status").textContent=mode==="semi"?"半公开：保存后游客看到本页生成的安全预览，会员验证后查看私有完整版。无需单独上传预览文件。":"完全公开：保存时从私有完整版自动生成公开副本。若是从半公开切换，无需重新上传；首次切换需管理员存储读取权限。";
 }
 function refreshQrPreview(url){
   const wrap=$("qr-preview-wrap"),img=$("qr-preview");
@@ -428,11 +539,42 @@ async function saveRecord(event){
       r.qr_url=$("qr_url").value.trim()||null;
       r.consult_text=$("consult_text").value.trim()||null;
       r.tags=$("tags").value.split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
-      if(r.access_mode==="semi"){
-        if(!r.private_path)throw new Error("半公开模式请先上传完整看板 HTML（私有存储）。");
-        if(!r.preview_url)throw new Error("请先上传看板 HTML；系统会自动生成游客预览版。");
+      const currentId=$("record-id").value;
+      const oldRecord=currentId?(cache.demos||[]).find(x=>String(x.id)===String(currentId)):null;
+      // One private master is the source of truth. Public mode gets a generated public copy;
+      // semi-public mode never points to any public HTML file.
+      const previousPageUrl=oldRecord?.page_url||r.page_url||"";
+      const previousPublicPath=publicObjectPathFromUrl(previousPageUrl);
+      if(!r.private_path)throw new Error("请先点击唯一的“上传看板 HTML”按钮上传一次完整 HTML。");
+      if(r.access_mode==="public"){
+        // Always rebuild the public copy from the private master on save. This also repairs
+        // already-published pages that were uploaded with a legacy/incorrect charset.
+        r.page_url=await publishPrivateMaster(r.private_path);
+        if(previousPublicPath && previousPageUrl!==r.page_url){
+          const {error:removeOldError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPublicPath]);
+          if(removeOldError)throw new Error("新公开副本已生成，但旧公开副本未能撤下。请先检查 dashboard-previews 删除权限，避免旧版本继续公开。错误："+removeOldError.message);
+        }
+        r.preview_url=null;
+      }else{
+        // Repair preview on every save from the private master. This fixes old records whose
+        // preview_url is empty/stale and avoids trusting an old preview object.
+        const previousPreviewPath=publicObjectPathFromUrl(oldRecord?.preview_url||r.preview_url||"");
+        r.preview_url=await publishPreviewFromPrivateMaster(r.private_path);
+        // Only remove the old preview after the new preview has been uploaded successfully.
+        if(previousPreviewPath){
+          const nextPreviewPath=publicObjectPathFromUrl(r.preview_url);
+          if(nextPreviewPath && nextPreviewPath!==previousPreviewPath){
+            const {error:previewRemoveError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPreviewPath]);
+            if(previewRemoveError)console.warn("新预览已生成，但旧预览清理失败：",previewRemoveError.message);
+          }
+        }
+        // Remove any system-managed public full copy only after preview generation succeeded.
+        if(previousPublicPath){
+          const {error:removeError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPublicPath]);
+          if(removeError)throw new Error("游客预览已生成，但无法撤下公开完整版，已取消保存以避免完整版继续公开。请在 Supabase 执行修复包内 SQL 并确认管理员权限。错误："+removeError.message);
+        }
         r.page_url=null;
-      }else {r.private_path=null;r.preview_url=null;if(!r.page_url)throw new Error("完全公开模式请先上传看板 HTML，系统会自动生成并读取网址。");}
+      }
       const op=$("board-operation")?.value||"new";
       if(op==="replace"&&!$("record-id").value)throw new Error("请先从列表选择要替换的看板。");
       if(op==="new"&&$("record-id").value)$("record-id").value="";
@@ -464,20 +606,9 @@ let selectedMember=null;
 function localDateTimeValue(date){const d=new Date(date.getTime()-date.getTimezoneOffset()*60000);return d.toISOString().slice(0,16);}
 function showMemberManager(){document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));$("members-tab").classList.add("active");$("content-form-panel").classList.add("hidden");$("content-list-panel").classList.add("hidden");$("member-panel").classList.remove("hidden");$("form-title").textContent="会员管理";}
 async function searchMember(){const email=$("member-email-search").value.trim();if(!email){setStatus("member-search-status","请先填写用户注册邮箱。");return;}setStatus("member-search-status","正在查找账号……");$("member-search-results").innerHTML="";$("member-edit-area").classList.add("hidden");try{const {data,error}=await db.from("member_profiles").select("user_id,email,created_at").ilike("email",email).limit(10);if(error)throw error;if(!data||!data.length){setStatus("member-search-status","没有找到该邮箱对应的账号。请确认用户已经注册并完成邮箱验证，或检查邮箱是否拼写正确。");return;}$("member-search-results").innerHTML=data.map(u=>`<div class="item"><div><div class="item-title">${escapeHtml(u.email)}</div><div class="item-desc">用户 ID：${escapeHtml(u.user_id)}<br>注册时间：${u.created_at?new Date(u.created_at).toLocaleString("zh-CN"):"—"}</div></div><div class="item-actions"><button type="button" class="secondary" data-select-member="${escapeHtml(u.user_id)}">管理该用户</button></div></div>`).join("");setStatus("member-search-status",`找到 ${data.length} 个匹配账号。请选择要开通的用户。`);}catch(e){setStatus("member-search-status","查找失败："+(e.message||String(e))+"。请确认已执行会员权限 SQL。");}}
-async function selectMember(userId){
-  const area=$("member-edit-area");area.classList.remove("hidden");setStatus("member-status","正在读取会员信息……");
-  try{
-    const {data:user,error:userError}=await db.from("member_profiles").select("user_id,email").eq("user_id",userId).single();
-    if(userError)throw userError;if(!user)throw new Error("未能读取该用户资料");
-    selectedMember=user;$("member-user-id").value=user.user_id;$("member-selected-title").textContent="会员权益设置 · "+user.email;
-    const {data:ent,error}=await db.from("member_entitlements").select("status,starts_at,expires_at,note").eq("user_id",user.user_id).maybeSingle();
-    if(error)throw error;
-    const now=new Date();$("member-start").value=ent?.starts_at?localDateTimeValue(new Date(ent.starts_at)):localDateTimeValue(now);$("member-expiry").value=ent?.expires_at?localDateTimeValue(new Date(ent.expires_at)):localDateTimeValue(new Date(now.getTime()+365*24*60*60*1000));$("member-note").value=ent?.note||"";
-    setStatus("member-status",ent?`当前状态：${ent.status}；到期时间：${ent.expires_at?new Date(ent.expires_at).toLocaleString("zh-CN"):"未设置"}`:"该用户尚无会员记录。可以在核实付款后开通。");
-  }catch(e){console.error(e);setStatus("member-status","读取会员信息失败："+(e.message||String(e))+"。如果提示 permission denied / row-level security，请检查管理员对 member_entitlements 表的 SELECT 权限策略。");}
-}
+async function selectMember(userId){const {data:user,error:userError}=await db.from("member_profiles").select("user_id,email").eq("user_id",userId).single();if(userError){setStatus("member-status",userError.message);return;}selectedMember=user;$("member-user-id").value=user.user_id;$("member-selected-title").textContent="会员权益设置 · "+user.email;const {data:ent,error}=await db.from("member_entitlements").select("status,starts_at,expires_at,note").eq("user_id",user.user_id).maybeSingle();if(error){setStatus("member-status",error.message);return;}const now=new Date();$("member-start").value=ent?.starts_at?localDateTimeValue(new Date(ent.starts_at)):localDateTimeValue(now);$("member-expiry").value=ent?.expires_at?localDateTimeValue(new Date(ent.expires_at)):localDateTimeValue(new Date(now.getTime()+365*24*60*60*1000));$("member-note").value=ent?.note||"";$("member-edit-area").classList.remove("hidden");setStatus("member-status",ent?`当前状态：${ent.status}；到期时间：${ent.expires_at?new Date(ent.expires_at).toLocaleString("zh-CN"):"未设置"}`:"该用户尚无会员记录。可以在核实付款后开通。");}
 async function saveMembership(revoke=false){if(!selectedMember){setStatus("member-status","请先查找并选择用户。");return;}const button=revoke?$("member-revoke-button") : $("member-grant-button");button.disabled=true;try{const start=$("member-start").value?new Date($("member-start").value).toISOString():new Date().toISOString();const expiry=$("member-expiry").value?new Date($("member-expiry").value).toISOString():null;if(!revoke&&expiry&&new Date(expiry)<=new Date(start))throw new Error("到期时间必须晚于开通时间。");const payload={user_id:selectedMember.user_id,status:revoke?"revoked":"active",starts_at:start,expires_at:expiry,note:$("member-note").value.trim()||null,granted_by:(await db.auth.getUser()).data.user?.id||null,updated_at:new Date().toISOString()};const {error}=await db.from("member_entitlements").upsert(payload,{onConflict:"user_id"});if(error)throw error;setStatus("member-status",revoke?"已撤销该用户的会员权限。":"会员已开通/更新。该账号刷新后即可访问所有已配置半公开看板的完整内容。", "success");}catch(e){setStatus("member-status","操作失败："+(e.message||String(e)));}finally{button.disabled=false;}}
-$("members-tab").addEventListener("click",showMemberManager);$("member-search-button").addEventListener("click",searchMember);$("member-email-search").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchMember();}});$("member-search-results").addEventListener("click",e=>{const b=e.target.closest("[data-select-member]");if(b){b.disabled=true;selectMember(b.dataset.selectMember).finally(()=>{b.disabled=false;});}});$("member-grant-button").addEventListener("click",()=>saveMembership(false));$("member-revoke-button").addEventListener("click",()=>{if(confirm("确定撤销该用户的会员权限吗？"))saveMembership(true);});
+$("members-tab").addEventListener("click",showMemberManager);$("member-search-button").addEventListener("click",searchMember);$("member-email-search").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchMember();}});$("member-search-results").addEventListener("click",e=>{const b=e.target.closest("[data-select-member]");if(b)selectMember(b.dataset.selectMember);});$("member-grant-button").addEventListener("click",()=>saveMembership(false));$("member-revoke-button").addEventListener("click",()=>{if(confirm("确定撤销该用户的会员权限吗？"))saveMembership(true);});
 
 $("login-form").addEventListener("submit",async e=>{
   e.preventDefault();setStatus("login-status","正在登录……");
@@ -528,8 +659,11 @@ $("upload-qr-button").addEventListener("click",()=>$("qr-file").click());
 $("qr-file").addEventListener("change",event=>uploadQrImage(event.target.files?.[0]));
 $("upload-private-dashboard-button").addEventListener("click",()=>$("private-dashboard-file").click());
 $("private-dashboard-file").addEventListener("change",event=>uploadPrivateDashboard(event.target.files?.[0]));
-
-$("access_mode").addEventListener("change",()=>{updateAccessModeUI();if($("access_mode").value==="public"){$("save-button").textContent=$("board-operation").value==="replace"?"上传并替换原看板":"上传并发布看板";}});
+$("access_mode").addEventListener("change",()=>{
+  updateAccessModeUI();
+  const op=$("board-operation")?.value||"new";
+  $("save-button").textContent=op==="replace"?"保存并替换原看板":"保存并发布看板";
+});
 $("board-operation").addEventListener("change",()=>{
   const op=$("board-operation").value;
   $("replace-board-wrap").classList.toggle("hidden",op!=="replace");
