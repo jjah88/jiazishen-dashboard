@@ -299,29 +299,93 @@ function normalizeHtmlToUtf8(bytes){
   }
   return html;
 }
-async function publishBlobToPublic(blob,fileName){
-  const cleanName=String(fileName||"dashboard.html").replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
-  const publicPath=`public/boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${cleanName}`;
+
+async function publishBlobToPublic(blob, fileName) {
+  const cleanName = String(fileName || "dashboard.html")
+    .replace(/[^a-zA-Z0-9._-]/g, "-")
+    .slice(-100) || "dashboard.html";
+
+  const publicPath =
+    `public/boards/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${cleanName}`;
+
+  // 1. 读取原文件，并统一为 UTF-8 HTML 文本
   const bytes = await blob.arrayBuffer();
-  // Always resolve the normalizer result before passing it to Blob.
-  // If an older/deployed copy still exposes an async normalizer, this prevents
-  // the Promise object itself from being serialized as the page body.
-  let normalizedHtml = await Promise.resolve(normalizeHtmlToUtf8(bytes));
-  if (typeof normalizedHtml !== "string") {
-    throw new Error("公开发布失败：HTML 编码处理未返回文本，请重新覆盖上传最新 admin.html 后再发布。");
+  const normalizedHtml = normalizeHtmlToUtf8(bytes);
+
+  if (typeof normalizedHtml !== "string" || !normalizedHtml.trim()) {
+    throw new Error("公开发布失败：HTML 编码处理结果为空或格式错误。");
   }
+
   if (normalizedHtml.trim() === "[object Promise]") {
-    throw new Error("公开发布失败：编码处理结果仍是 Promise，请检查后台是否已更新到最新版本。");
+    throw new Error("公开发布失败：HTML 编码处理结果异常，请检查后台版本。");
   }
-  const htmlBlob = new Blob([normalizedHtml], {type:"text/html;charset=utf-8"});
-  const {data,error}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(publicPath,htmlBlob,{cacheControl:"60",upsert:false,contentType:"text/html; charset=utf-8"});
-  if(error){
-    const detail=[error.message,error.error,error.statusCode,error.name].filter(Boolean).join(" | ");
-    throw new Error("上传到公开存储桶失败"+(error.statusCode?"（HTTP "+error.statusCode+"）":"")+"："+(detail||"未知存储错误")+"。请检查 dashboard-previews 桶的文件大小限制及管理员上传策略。原始错误："+JSON.stringify({statusCode:error.statusCode,error:error.error,message:error.message}));
+
+  if (!/<html[\s>]/i.test(normalizedHtml) &&
+      !/<!doctype\s+html/i.test(normalizedHtml)) {
+    throw new Error("公开发布失败：生成的文件不是有效的 HTML 页面。");
   }
-  const pub=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(data.path);
-  if(!pub.data?.publicUrl)throw new Error("公开副本已上传，但未能生成公开网址。");
-  return pub.data.publicUrl;
+
+  // 2. 明确将文件作为 HTML 上传，而不是普通文本
+  const htmlBlob = new Blob([normalizedHtml], {
+    type: "text/html;charset=utf-8"
+  });
+
+  const storage = db.storage.from(PUBLIC_DASHBOARD_BUCKET);
+
+  const { data, error } = await storage.upload(
+    publicPath,
+    htmlBlob,
+    {
+      cacheControl: "0",
+      upsert: false,
+      contentType: "text/html; charset=utf-8"
+    }
+  );
+
+  if (error) {
+    throw new Error(
+      "公开 HTML 上传失败：" +
+      (error.message || JSON.stringify(error))
+    );
+  }
+
+  // 3. 上传后重新读取文件，检查存储服务实际返回的 MIME 类型
+  const { data: checkBlob, error: checkError } =
+    await storage.download(data.path);
+
+  if (checkError || !checkBlob) {
+    await storage.remove([data.path]);
+    throw new Error(
+      "公开文件已上传，但回读校验失败：" +
+      (checkError?.message || "未读取到文件")
+    );
+  }
+
+  const returnedType = String(checkBlob.type || "")
+    .split(";")[0]
+    .trim()
+    .toLowerCase();
+
+  if (returnedType !== "text/html") {
+    await storage.remove([data.path]);
+
+    throw new Error(
+      "公开发布已中止：上传后的文件类型校验不通过。" +
+      "实际返回类型为 " + (checkBlob.type || "未知类型") +
+      "，预期为 text/html。" +
+      "旧看板记录未因本次校验而更新，请勿删除原文件。"
+    );
+  }
+
+  // 4. 只有校验成功后才返回新网址，供后续保存数据库记录
+  const { data: publicData } = storage.getPublicUrl(data.path);
+
+  if (!publicData?.publicUrl) {
+    await storage.remove([data.path]);
+    throw new Error("公开文件校验通过，但未能生成公开网址。");
+  }
+
+  return publicData.publicUrl;
 }
 async function publishPrivateMaster(path){
   if(!path)throw new Error("尚未上传完整版。请先使用唯一的上传按钮上传一次 HTML 文件。");
