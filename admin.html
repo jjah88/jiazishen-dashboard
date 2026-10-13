@@ -125,10 +125,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
           </div>
           <label for="page_url">公开完整看板网址（仅完全公开模式使用）</label><input id="page_url" type="url" placeholder="完全公开模式可用网址；半公开模式由私有 HTML 文件提供完整内容">
           <div id="private-dashboard-upload-panel" style="margin-top:14px;padding:14px;border:1px solid #e2e8ef;border-radius:8px;background:#f8fafb">
-            <label for="private_path">完整看板 HTML（半公开模式存入私有存储）</label><input id="private_path" type="text" readonly placeholder="上传完整 HTML 后自动填入私有文件路径">
-            <div class="actions" style="margin-top:8px"><button type="button" id="upload-private-dashboard-button" class="secondary">上传完整看板 HTML</button><input id="private-dashboard-file" type="file" accept=".html,text/html" class="hidden"><span id="private-dashboard-upload-status" class="sub" style="align-self:center"></span></div>
+            <label for="private_path">完整看板 HTML（一次上传，后续可切换访问方式）</label><input id="private_path" type="text" readonly placeholder="上传完整 HTML 后自动填入私有文件路径">
+            <div class="actions" style="margin-top:8px"><button type="button" id="upload-private-dashboard-button" class="secondary">上传看板 HTML（仅此一个上传按钮）</button><input id="private-dashboard-file" type="file" accept=".html,text/html" class="hidden"><span id="private-dashboard-upload-status" class="sub" style="align-self:center"></span></div>
             <input id="preview_url" type="url" class="hidden" aria-hidden="true" tabindex="-1">
-            <div class="sub" style="margin-top:8px;line-height:1.7">只需上传一次。半公开模式会将完整 HTML 存入私有存储，并自动生成独立的游客预览页；预览页只展示看板标题、简介和栏目概览，不会把完整数据复制到公开存储。有效会员仍通过服务端验证读取完整版。</div>
+            <div class="sub" style="margin-top:8px;line-height:1.7">只需上传一次。系统始终保留一份私有完整版；选择“完全公开”时自动发布公开副本，选择“半公开”时游客只看到本页面生成的安全预览，会员通过服务端验证查看完整版。以后可直接切换访问方式，无需重新选择文件。</div>
           </div>
           <div class="row">
             <div>
@@ -218,49 +218,62 @@ function buildSafePreviewHtml(sourceHtml, fileName){
   const headingHtml = headings.length ? headings.map(h=>`<li>${escapeHtml(h)}</li>`).join("") : "<li>市场动态与产业结构</li><li>政策法规与市场准入</li><li>重点项目与企业资源</li>";
   return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${safeTitle}｜游客预览</title><style>*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#243247;font-family:Arial,"Microsoft YaHei",sans-serif;line-height:1.7}.wrap{max-width:900px;margin:0 auto;padding:28px 18px 48px}.brand{font-size:12px;letter-spacing:2px;color:#5d7694;font-weight:700}.hero{margin-top:12px;padding:30px;border-radius:14px;background:#12304c;color:#fff}.eyebrow{font-size:12px;color:#b8cce0;letter-spacing:1.5px}.hero h1{font-size:clamp(26px,5vw,38px);line-height:1.3;margin:12px 0}.hero p{color:#d9e5ef;margin:0}.pill{display:inline-block;margin-top:18px;padding:5px 10px;border:1px solid #7290ac;border-radius:20px;font-size:12px;color:#e7f0f7}.card{background:#fff;border:1px solid #dfe7ef;border-radius:12px;padding:22px;margin-top:16px}.card h2{font-size:18px;margin:0 0 12px;color:#173a5a}.card ul{margin:0;padding-left:22px}.card li{padding:5px 0}.foot{font-size:13px;color:#697b8d;margin-top:18px}.cta{margin-top:18px;padding:14px 16px;background:#edf3f8;border-left:3px solid #7b9ab6;border-radius:6px;color:#344e66;font-size:14px}</style></head><body><div class="wrap"><div class="brand">甲子申｜出海决策产业情报</div><section class="hero"><div class="eyebrow">RESEARCH DASHBOARD · PREVIEW</div><h1>${safeTitle}</h1><p>${safeDescription}</p><span class="pill">游客预览 · 完整内容需会员权限</span></section><section class="card"><h2>本看板内容框架</h2><ul>${headingHtml}</ul><div class="cta">当前页面仅展示看板简介与栏目框架。市场数据、详细分析、项目资料及企业名录等完整内容不包含在公开预览文件中。</div></section><div class="foot">源看板标题：${safeSourceTitle}<br>甲子申 · 中国企业出海决策情报</div></div></body></html>`;
 }
+function publicObjectPathFromUrl(url){
+  try{
+    const u=new URL(url);
+    if(u.origin!==new URL(SUPABASE_URL).origin)return null;
+    const marker=`/storage/v1/object/public/${PUBLIC_DASHBOARD_BUCKET}/`;
+    const at=u.pathname.indexOf(marker);
+    if(at<0)return null;
+    const p=decodeURIComponent(u.pathname.slice(at+marker.length));
+    return (p.startsWith("public/boards/")||p.startsWith("boards/"))?p:null;
+  }catch{return null;}
+}
+async function publishBlobToPublic(blob,fileName){
+  const cleanName=String(fileName||"dashboard.html").replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
+  const publicPath=`public/boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${cleanName}`;
+  const {data,error}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(publicPath,blob,{cacheControl:"60",upsert:false,contentType:"text/html;charset=utf-8"});
+  if(error)throw error;
+  const pub=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(data.path);
+  if(!pub.data?.publicUrl)throw new Error("公开副本已上传，但未能生成公开网址。");
+  return pub.data.publicUrl;
+}
+async function publishPrivateMaster(path){
+  if(!path)throw new Error("尚未上传完整版。请先使用唯一的上传按钮上传一次 HTML 文件。");
+  const {data:blob,error:downloadError}=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).download(path);
+  if(downloadError)throw new Error("无法读取私有完整版，暂时不能切换为完全公开。请执行修复包内的 storage-admin-policies.sql 后重试。"+downloadError.message);
+  return await publishBlobToPublic(blob,path.split("/").pop()||"dashboard.html");
+}
 async function uploadPrivateDashboard(file){
   if(!file)return;
   if(!file.name.toLowerCase().endsWith(".html") && file.type!=="text/html"){setStatus("private-dashboard-upload-status","请选择 .html 文件。");return;}
   if(file.size>20*1024*1024){setStatus("private-dashboard-upload-status","文件不能超过 20MB。");return;}
   const button=$("upload-private-dashboard-button");button.disabled=true;
-  const mode=$("access_mode").value;
-  setStatus("private-dashboard-upload-status",mode==="semi"?"正在安全上传完整版并自动生成游客预览……":"正在上传公开 HTML……");
+  setStatus("private-dashboard-upload-status","正在上传：保存私有完整版，并按当前访问方式准备页面……");
   try{
     const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
     const path=`boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;
-    if(mode==="public"){
-      const result=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(`public/${path}`,file,{cacheControl:"60",upsert:false,contentType:"text/html"});
-      if(result.error)throw result.error;
-      const pub=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(result.data.path);
-      if(!pub.data?.publicUrl)throw new Error("上传成功，但未能生成公开网址");
-      $("page_url").value=pub.data.publicUrl;
-      $("private_path").value="";
-      $("preview_url").value="";
-      setStatus("private-dashboard-upload-status","公开 HTML 已上传并填入网址。点击下方按钮保存看板记录。");
+    const privateResult=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"0",upsert:false,contentType:"text/html;charset=utf-8"});
+    if(privateResult.error)throw privateResult.error;
+    $("private_path").value=privateResult.data.path;
+    // Preview HTML is no longer uploaded publicly. viewer.html renders a metadata-only preview itself,
+    // avoiding restrictive CSP headers and preventing source HTML/data from being exposed.
+    $("preview_url").value="";
+    if($("access_mode").value==="public"){
+      try{$("page_url").value=await publishBlobToPublic(file,safeName);}
+      catch(e){setStatus("private-dashboard-upload-status","私有完整版已安全保存；自动发布公开副本失败。可先切换为半公开保存，或检查存储权限。错误："+(e.message||String(e)));return;}
     }else{
-      const result=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"0",upsert:false,contentType:"text/html"});
-      if(result.error)throw result.error;
-      $("private_path").value=result.data.path;
-      const sourceHtml=await file.text();
-      const previewHtml=buildSafePreviewHtml(sourceHtml,file.name);
-      const previewBlob=new Blob([previewHtml],{type:"text/html;charset=utf-8"});
-      const previewPath=`previews/${Date.now()}-${Math.random().toString(36).slice(2,8)}-visitor-preview.html`;
-      const previewResult=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(previewPath,previewBlob,{cacheControl:"60",upsert:false,contentType:"text/html"});
-      if(previewResult.error)throw new Error("完整版已存入私有存储，但自动生成游客预览失败："+previewResult.error.message+"。请勿重新上传完整版到公开存储桶。");
-      const previewPublic=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(previewResult.data.path);
-      if(!previewPublic.data?.publicUrl)throw new Error("完整版已存入私有存储，但未能生成游客预览网址。请检查 dashboard-previews 存储桶。");
-      $("preview_url").value=previewPublic.data.publicUrl;
       $("page_url").value="";
-      setStatus("private-dashboard-upload-status","完成：完整版已存入私有存储，游客预览页已自动生成。现在点击下方按钮保存看板记录。旧文件保留作备份。 ");
     }
-  }catch(e){console.error(e);setStatus("private-dashboard-upload-status","上传/生成失败："+(e.message||String(e))+"。请确认存储桶和管理员权限配置正确。");}
+    setStatus("private-dashboard-upload-status","上传完成。完整版已保存；游客预览由 viewer.html 直接生成，不再依赖单独的预览 HTML 文件。点击下方保存按钮发布看板。之后可直接切换访问方式，无需重新上传。 ");
+  }catch(e){console.error(e);setStatus("private-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认私有存储桶的上传权限。");}
   finally{button.disabled=false;$("private-dashboard-file").value="";}
 }
 function updateAccessModeUI(){
   const mode=$("access_mode").value;
-  $("page_url").required=currentType==="demos"&&mode==="public";
+  $("page_url").required=false;
   $("private-dashboard-upload-panel").style.borderColor=mode==="semi"?"#c5a46a":"#e2e8ef";
-  $("private-dashboard-upload-status").textContent=mode==="semi"?"半公开模式只需上传一次完整 HTML，系统自动生成独立游客预览页。":"完全公开模式使用公开看板网址，或上传公开 HTML 文件。";
+  $("private-dashboard-upload-status").textContent=mode==="semi"?"所有模式均只需上传一次 HTML；游客预览由 viewer.html 直接生成。":"完全公开模式自动发布已上传的私有完整版；无需再次选择文件。";
 }
 function refreshQrPreview(url){
   const wrap=$("qr-preview-wrap"),img=$("qr-preview");
@@ -321,7 +334,7 @@ function showType(type){
   $("member-panel").classList.add("hidden");
   $("members-tab").classList.remove("active");
   $("code").required=false;
-  $("page_url").required=type==="demos" && $("access_mode").value==="public";
+  $("page_url").required=false;
   $("topic_url").required=type==="topics";
   $("form-title").textContent="新增"+configs[type].label;
   updateAccessModeUI();
@@ -429,11 +442,22 @@ async function saveRecord(event){
       r.qr_url=$("qr_url").value.trim()||null;
       r.consult_text=$("consult_text").value.trim()||null;
       r.tags=$("tags").value.split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
-      if(r.access_mode==="semi"){
-        if(!r.private_path)throw new Error("半公开模式请先上传完整看板 HTML（私有存储）。");
-        if(!r.preview_url)throw new Error("请先上传一次完整 HTML，系统会自动生成游客预览页。");
+      const currentId=$("record-id").value;
+      const oldRecord=currentId?(cache.demos||[]).find(x=>String(x.id)===String(currentId)):null;
+      // Access mode may change later; keep the private master and derive the needed delivery copy.
+      if(r.access_mode==="public"){
+        if(!r.page_url && r.private_path) r.page_url=await publishPrivateMaster(r.private_path);
+        if(!r.page_url)throw new Error("请先使用唯一的上传按钮上传一次 HTML 文件，或填写外部公开网址。");
+      }else{
+        if(!r.private_path)throw new Error("半公开模式需要私有完整版。请先使用唯一的上传按钮上传一次 HTML 文件。");
+        const oldPublicPath=oldRecord?publicObjectPathFromUrl(oldRecord.page_url):null;
+        if(oldRecord && oldRecord.access_mode==="public" && oldPublicPath){
+          const {error:removeError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([oldPublicPath]);
+          if(removeError)throw new Error("无法撤下此前公开的 HTML，已取消本次切换以避免完整版继续公开。请检查 dashboard-previews 存储桶删除权限后重试。"+removeError.message);
+        }
         r.page_url=null;
-      }else if(!r.page_url)throw new Error("完全公开模式请填写公开网址，或使用“上传完整看板 HTML”上传公开文件。");
+        r.preview_url=null;
+      }
       const op=$("board-operation")?.value||"new";
       if(op==="replace"&&!$("record-id").value)throw new Error("请先从列表选择要替换的看板。");
       if(op==="new"&&$("record-id").value)$("record-id").value="";
