@@ -123,13 +123,13 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <div><label for="access_mode">访问方式</label><select id="access_mode"><option value="semi">半公开：游客预览，会员查看完整内容</option><option value="public">完全公开</option></select></div>
             <div><label for="preview_percent">预览遮挡位置（20–70%）</label><input id="preview_percent" type="number" min="20" max="70" value="45"></div>
           </div>
-          <label for="page_url">公开完整看板网址（仅完全公开模式使用）</label><input id="page_url" type="url" placeholder="完全公开模式可用网址；半公开模式由私有 HTML 文件提供完整内容">
+          <label for="page_url">外部公开看板网址（可选；优先使用下方上传的 HTML）</label><input id="page_url" type="url" placeholder="如已有外部网页可填写；上传 HTML 后无需填写">
           <div id="private-dashboard-upload-panel" style="margin-top:14px;padding:14px;border:1px solid #e2e8ef;border-radius:8px;background:#f8fafb">
-            <label for="private_path">完整看板 HTML（半公开模式存入私有存储）</label><input id="private_path" type="text" readonly placeholder="上传完整 HTML 后自动填入私有文件路径">
+            <label for="private_path">完整看板 HTML（公开/半公开模式均存入私有存储，由服务端按访问方式授权读取）</label><input id="private_path" type="text" readonly placeholder="上传完整 HTML 后自动填入私有文件路径">
             <div class="actions" style="margin-top:8px"><button type="button" id="upload-private-dashboard-button" class="secondary">上传完整看板 HTML</button><input id="private-dashboard-file" type="file" accept=".html,text/html" class="hidden"><span id="private-dashboard-upload-status" class="sub" style="align-self:center"></span></div>
             <label for="preview_url">游客预览版 HTML 网址</label><input id="preview_url" type="url" placeholder="上传预览版 HTML 后自动填入，也可填写已发布的预览网址">
             <div class="actions" style="margin-top:8px"><button type="button" id="upload-preview-dashboard-button" class="secondary">上传游客预览版 HTML</button><input id="preview-dashboard-file" type="file" accept=".html,text/html" class="hidden"><span id="preview-dashboard-upload-status" class="sub" style="align-self:center"></span></div>
-            <div class="sub" style="margin-top:7px;line-height:1.7">半公开模式必须分别准备“完整 HTML”和“预览版 HTML”。预览版只放游客可见内容；完整 HTML 存入私有存储，只有有效会员经服务端验证后才能访问。建议两份文件都使用自包含 HTML（图片、CSS、数据内嵌或使用 CDN）。</div>
+            <div class="sub" style="margin-top:7px;line-height:1.7">完全公开模式：上传完整 HTML 后，任何访客都可通过看板页查看完整内容；文件本身仍保存在私有存储。半公开模式：游客看预览版，完整 HTML 仅对有效会员开放。建议 HTML 使用自包含资源或稳定 CDN。</div>
           </div>
           <div class="row">
             <div>
@@ -141,7 +141,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <div><label for="tags">搜索标签（逗号分隔）</label><input id="tags" placeholder="市场准入，认证，贸易数据"></div>
           </div>
           <label for="consult_text">会员提示文案</label><textarea id="consult_text" maxlength="1000" placeholder="当前为公开预览。注册并登录后，开通甲子申会员即可查看完整产业研究内容。"></textarea>
-          <div class="notice">半公开访问流程：游客看预览 → 注册/登录 → 管理员核实并开通会员 → 查看完整内容。不要把完整 HTML 上传到公开 GitHub Pages 或公开预览桶。</div>
+          <div class="notice">访问规则：完全公开看板允许游客读取完整 HTML；半公开看板仍需会员校验。完整 HTML 不直接放在公开存储桶中。</div>
         </div>
 
         <div id="topic-fields" class="hidden">
@@ -206,60 +206,20 @@ function setBusy(b){$("save-button").disabled=b;}
 const QR_BUCKET = "consultation-qr";
 const PRIVATE_DASHBOARD_BUCKET = "private-dashboards";
 const PUBLIC_DASHBOARD_BUCKET = "dashboard-previews";
-
-// 统一公开 HTML 上传：在首次上传请求中同时指定 Blob 类型和 Storage contentType。
-// 不再上传后调用 bucket.update() 修改元数据，避免触发额外的 Storage RLS UPDATE 权限要求。
-async function uploadPublicHtml(path, file, cacheControl="0"){
-  const bucket = db.storage.from(PUBLIC_DASHBOARD_BUCKET);
-  const htmlBlob = new Blob([await file.arrayBuffer()], {type:"text/html"});
-  const upload = await bucket.upload(path, htmlBlob, {
-    cacheControl,
-    upsert:false,
-    contentType:"text/html"
-  });
-  if(upload.error) throw upload.error;
-
-  const publicResult = bucket.getPublicUrl(upload.data.path);
-  const publicUrl = publicResult.data?.publicUrl;
-  if(!publicUrl) throw new Error("上传成功，但未能生成公开网址");
-
-  // 上传后只核验，不尝试用前端权限修改对象元数据。
-  const checkUrl = `${publicUrl}${publicUrl.includes("?") ? "&" : "?"}__mime_check=${Date.now()}`;
-  let response;
-  try {
-    response = await fetch(checkUrl, {method:"HEAD", cache:"no-store"});
-  } catch(e) {
-    throw new Error("文件已上传，但浏览器无法验证公开链接的响应类型。请勿发布；请检查公开存储桶的读取配置。");
-  }
-  const mime = response.headers.get("content-type") || "";
-  if(!response.ok) throw new Error(`文件已上传，但公开链接检查失败（HTTP ${response.status}）。请勿发布。`);
-  if(!mime.toLowerCase().includes("text/html")) {
-    throw new Error(`文件已上传，但服务器仍返回 ${mime || "未知类型"}，不是 text/html。系统没有尝试修改元数据（避免 RLS 权限错误），请检查 Supabase Storage 对该文件的实际 Content-Type。`);
-  }
-  return {data:upload.data, publicUrl, contentType:mime};
-}
-
 async function uploadPrivateDashboard(file){
   if(!file)return;
   if(!file.name.toLowerCase().endsWith(".html") && file.type!=="text/html"){setStatus("private-dashboard-upload-status","请选择 .html 文件。");return;}
   if(file.size>20*1024*1024){setStatus("private-dashboard-upload-status","文件不能超过 20MB。");return;}
-  const button=$("upload-private-dashboard-button");button.disabled=true;setStatus("private-dashboard-upload-status","正在上传完整 HTML……");
+  const button=$("upload-private-dashboard-button");button.disabled=true;setStatus("private-dashboard-upload-status","正在安全上传完整 HTML……");
   try{
     const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
     const path=`boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;
-    if($("access_mode").value==="public"){
-      const result=await uploadPublicHtml(`public/${path}`,file,"0");
-      $("page_url").value=result.publicUrl;
-      $("private_path").value="";
-      setStatus("private-dashboard-upload-status","公开 HTML 已上传并填入网址。点击“上传并发布看板”保存记录。");
-    }else{
-      const privateHtmlBlob=new Blob([await file.arrayBuffer()],{type:"text/html"});
-      const result=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,privateHtmlBlob,{cacheControl:"0",upsert:false,contentType:"text/html"});
-      if(result.error)throw result.error;
-      $("private_path").value=result.data.path;
-      setStatus("private-dashboard-upload-status","完整 HTML 已安全上传。保存/发布看板后生效；替换时旧文件会保留作备份。");
-    }
-  }catch(e){console.error(e);setStatus("private-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认已执行新的权限 SQL，并确认当前账号为管理员。");}
+    const result=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"0",upsert:false,contentType:"text/html"});
+    if(result.error)throw result.error;
+    $("private_path").value=result.data.path;
+    if($("access_mode").value==="public")$("page_url").value="";
+    setStatus("private-dashboard-upload-status",$("access_mode").value==="public"?"完整 HTML 已安全上传。发布后游客可直接查看，文件不会暴露为公开存储链接。":"完整 HTML 已安全上传。半公开模式仍仅允许有效会员查看完整内容。");
+  }catch(e){console.error(e);setStatus("private-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认私有桶 private-dashboards 已创建，且当前账号有管理员上传权限。");}
   finally{button.disabled=false;$("private-dashboard-file").value="";}
 }
 async function uploadPreviewDashboard(file){
@@ -270,17 +230,20 @@ async function uploadPreviewDashboard(file){
   try{
     const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"preview.html";
     const path=`previews/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;
-    const result=await uploadPublicHtml(path,file,"0");
-    $("preview_url").value=result.publicUrl;
+    const result=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"60",upsert:false,contentType:"text/html"});
+    if(result.error)throw result.error;
+    const pub=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(result.data.path);
+    if(!pub.data?.publicUrl)throw new Error("上传成功，但未能生成预览网址");
+    $("preview_url").value=pub.data.publicUrl;
     setStatus("preview-dashboard-upload-status","预览版已上传并填入网址。请确认该文件只包含允许游客查看的内容。");
   }catch(e){console.error(e);setStatus("preview-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认已执行新的权限 SQL，并确认预览存储桶已创建。");}
   finally{button.disabled=false;$("preview-dashboard-file").value="";}
 }
 function updateAccessModeUI(){
   const mode=$("access_mode").value;
-  $("page_url").required=currentType==="demos"&&mode==="public";
+  $("page_url").required=false;
   $("private-dashboard-upload-panel").style.borderColor=mode==="semi"?"#c5a46a":"#e2e8ef";
-  $("private-dashboard-upload-status").textContent=mode==="semi"?"半公开模式需上传完整 HTML，并另备游客预览版。":"完全公开模式使用公开看板网址，或上传公开 HTML 文件。";
+  $("private-dashboard-upload-status").textContent=mode==="semi"?"半公开模式需上传完整 HTML，并另备游客预览版。":"完全公开模式可直接上传完整 HTML；发布后游客无需登录即可查看。也可填写外部公开网址。";
 }
 function refreshQrPreview(url){
   const wrap=$("qr-preview-wrap"),img=$("qr-preview");
@@ -341,7 +304,7 @@ function showType(type){
   $("member-panel").classList.add("hidden");
   $("members-tab").classList.remove("active");
   $("code").required=false;
-  $("page_url").required=type==="demos" && $("access_mode").value==="public";
+  $("page_url").required=false;
   $("topic_url").required=type==="topics";
   $("form-title").textContent="新增"+configs[type].label;
   updateAccessModeUI();
@@ -453,7 +416,10 @@ async function saveRecord(event){
         if(!r.private_path)throw new Error("半公开模式请先上传完整看板 HTML（私有存储）。");
         if(!r.preview_url)throw new Error("半公开模式请上传游客预览版 HTML，或填写预览版网址。");
         r.page_url=null;
-      }else if(!r.page_url)throw new Error("完全公开模式请填写公开网址，或使用“上传完整看板 HTML”上传公开文件。");
+      }else{
+        if(!r.private_path&&!r.page_url)throw new Error("完全公开模式请上传完整看板 HTML，或填写已有的外部公开网址。");
+        if(r.private_path)r.page_url=null;
+      }
       const op=$("board-operation")?.value||"new";
       if(op==="replace"&&!$("record-id").value)throw new Error("请先从列表选择要替换的看板。");
       if(op==="new"&&$("record-id").value)$("record-id").value="";
