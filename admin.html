@@ -207,15 +207,15 @@ const QR_BUCKET = "consultation-qr";
 const PRIVATE_DASHBOARD_BUCKET = "private-dashboards";
 const PUBLIC_DASHBOARD_BUCKET = "dashboard-previews";
 
-// 统一公开 HTML 上传：明确把内容作为 UTF-8 HTML 上传，并核验服务器实际返回的 MIME 类型。
-// 这样新上传的公开看板不会因为被当成 text/plain 而显示成整页源码。
+// 统一公开 HTML 上传：在首次上传请求中同时指定 Blob 类型和 Storage contentType。
+// 不再上传后调用 bucket.update() 修改元数据，避免触发额外的 Storage RLS UPDATE 权限要求。
 async function uploadPublicHtml(path, file, cacheControl="0"){
   const bucket = db.storage.from(PUBLIC_DASHBOARD_BUCKET);
-  const htmlBlob = new Blob([await file.arrayBuffer()], {type:"text/html;charset=utf-8"});
+  const htmlBlob = new Blob([await file.arrayBuffer()], {type:"text/html"});
   const upload = await bucket.upload(path, htmlBlob, {
     cacheControl,
     upsert:false,
-    contentType:"text/html; charset=utf-8"
+    contentType:"text/html"
   });
   if(upload.error) throw upload.error;
 
@@ -223,27 +223,18 @@ async function uploadPublicHtml(path, file, cacheControl="0"){
   const publicUrl = publicResult.data?.publicUrl;
   if(!publicUrl) throw new Error("上传成功，但未能生成公开网址");
 
-  // HEAD 检查真实响应头；如果服务端元数据不正确，尝试立即重写对象元数据。
-  const checkUrl = () => `${publicUrl}${publicUrl.includes("?") ? "&" : "?"}__mime_check=${Date.now()}`;
+  // 上传后只核验，不尝试用前端权限修改对象元数据。
+  const checkUrl = `${publicUrl}${publicUrl.includes("?") ? "&" : "?"}__mime_check=${Date.now()}`;
   let response;
   try {
-    response = await fetch(checkUrl(), {method:"HEAD", cache:"no-store"});
+    response = await fetch(checkUrl, {method:"HEAD", cache:"no-store"});
   } catch(e) {
-    throw new Error("文件已上传，但无法验证公开链接的响应类型。请勿发布，检查存储桶访问配置后重试。");
+    throw new Error("文件已上传，但浏览器无法验证公开链接的响应类型。请勿发布；请检查公开存储桶的读取配置。");
   }
-  let mime = response.headers.get("content-type") || "";
+  const mime = response.headers.get("content-type") || "";
   if(!response.ok) throw new Error(`文件已上传，但公开链接检查失败（HTTP ${response.status}）。请勿发布。`);
-  if(!mime.toLowerCase().includes("text/html")){
-    const repaired = await bucket.update(upload.data.path, htmlBlob, {
-      cacheControl:"0",
-      contentType:"text/html; charset=utf-8"
-    });
-    if(repaired.error) throw new Error(`文件已上传，但服务器返回类型为 ${mime || "未知"}，自动校正失败：${repaired.error.message || repaired.error}`);
-    response = await fetch(checkUrl(), {method:"HEAD", cache:"no-store"});
-    mime = response.headers.get("content-type") || "";
-    if(!response.ok || !mime.toLowerCase().includes("text/html")){
-      throw new Error(`公开文件仍未以 HTML 返回（当前类型：${mime || "未知"}）。已停止自动发布，请检查 Supabase 存储配置。`);
-    }
+  if(!mime.toLowerCase().includes("text/html")) {
+    throw new Error(`文件已上传，但服务器仍返回 ${mime || "未知类型"}，不是 text/html。系统没有尝试修改元数据（避免 RLS 权限错误），请检查 Supabase Storage 对该文件的实际 Content-Type。`);
   }
   return {data:upload.data, publicUrl, contentType:mime};
 }
@@ -262,7 +253,8 @@ async function uploadPrivateDashboard(file){
       $("private_path").value="";
       setStatus("private-dashboard-upload-status","公开 HTML 已上传并填入网址。点击“上传并发布看板”保存记录。");
     }else{
-      const result=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"0",upsert:false,contentType:"text/html"});
+      const privateHtmlBlob=new Blob([await file.arrayBuffer()],{type:"text/html"});
+      const result=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,privateHtmlBlob,{cacheControl:"0",upsert:false,contentType:"text/html"});
       if(result.error)throw result.error;
       $("private_path").value=result.data.path;
       setStatus("private-dashboard-upload-status","完整 HTML 已安全上传。保存/发布看板后生效；替换时旧文件会保留作备份。");
