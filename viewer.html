@@ -40,7 +40,7 @@ async function tryLoadMemberHtml(id){
  const status=document.getElementById("status");
  try{
   const id=new URLSearchParams(location.search).get("id");if(!id)throw new Error("缺少看板编号。");
-  const {data:d,error}=await db.from("demos").select("id,name,description,page_url,private_path,access_mode,qr_url,consult_text,preview_percent,is_published").eq("id",id).eq("is_published",true).maybeSingle();
+  const {data:d,error}=await db.from("demos").select("id,name,description,page_url,private_path,access_mode,preview_url,qr_url,consult_text,preview_percent,is_published").eq("id",id).eq("is_published",true).maybeSingle();
   if(error)throw error;if(!d)throw new Error("该看板不存在或尚未发布。");
   document.title=d.name+"｜甲子申";
   const semi=d.access_mode!=="public";

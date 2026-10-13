@@ -223,7 +223,7 @@ function buildSafePreviewHtml(sourceHtml, fileName, previewPercent){
     }
   }
   // Remove external scripts/styles to keep the preview static and avoid CSP-dependent behavior.
-  parsed.querySelectorAll("link[rel='stylesheet'],link[rel='preload'][as='script'],script").forEach(el=>el.remove());
+  parsed.querySelectorAll("link[rel='preload'][as='script'],script").forEach(el=>el.remove());
   const candidates=[...parsed.querySelectorAll("main,.wrap,.container,.page,#app,body")];
   const contentScore=el=>[...el.children].filter(c=>c.matches("section,article")||c.classList.contains("hero")||c.classList.contains("section")||c.classList.contains("panel")).length;
   let container=candidates.sort((a,b)=>contentScore(b)-contentScore(a))[0]||parsed.body;
@@ -235,8 +235,7 @@ function buildSafePreviewHtml(sourceHtml, fileName, previewPercent){
     blocks=[...container.children].filter(c=>!['SCRIPT','STYLE','LINK','META'].includes(c.tagName));
   }
   const pct=Math.max(20,Math.min(70,Number(previewPercent)||45));
-  const extra=Math.floor((pct-20)/25); // 20%=hero only; 45%=hero+one section; 70%=hero+two sections
-  const keepCount=Math.min(blocks.length,Math.max(1,1+extra));
+  const keepCount=Math.min(blocks.length,Math.max(1,Math.ceil(blocks.length*pct/100))); // retain the selected 20–70% of the real content blocks
   if(blocks.length){
     const lastKept=blocks[keepCount-1];
     let removeFollowing=false;
@@ -277,7 +276,10 @@ async function publishBlobToPublic(blob,fileName){
   const cleanName=String(fileName||"dashboard.html").replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
   const publicPath=`public/boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${cleanName}`;
   const {data,error}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(publicPath,blob,{cacheControl:"60",upsert:false,contentType:"text/html;charset=utf-8"});
-  if(error)throw error;
+  if(error){
+    const detail=[error.message,error.error,error.statusCode,error.name].filter(Boolean).join(" | ");
+    throw new Error("上传到公开存储桶失败"+(error.statusCode?"（HTTP "+error.statusCode+"）":"")+"："+(detail||"未知存储错误")+"。请检查 dashboard-previews 桶的文件大小限制及管理员上传策略。原始错误："+JSON.stringify({statusCode:error.statusCode,error:error.error,message:error.message}));
+  }
   const pub=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(data.path);
   if(!pub.data?.publicUrl)throw new Error("公开副本已上传，但未能生成公开网址。");
   return pub.data.publicUrl;
