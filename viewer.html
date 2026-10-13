@@ -22,18 +22,13 @@ async function tryLoadMemberHtml(id){
  const {data:{session},error:sessionError}=await db.auth.getSession();if(sessionError)throw sessionError;
  if(!session?.user)return {loggedIn:false,active:false};
  const {data:access,error}=await db.functions.invoke("get-private-dashboard",{body:{demo_id:id}});
- // Keep the original semi-public delivery path: the server validates membership
- // and returns a short-lived signed URL. Only public boards use HTML-as-JSON + Blob.
- if(!error&&typeof access?.signed_url==="string")return {loggedIn:true,active:true,url:access.signed_url};
+ if(!error&&typeof access?.html==="string"){
+  const blob=new Blob([access.html],{type:"text/html;charset=utf-8"});
+  return {loggedIn:true,active:true,url:URL.createObjectURL(blob)};
+ }
  let reason=access?.error||"当前账号尚未开通有效会员。请先完成注册/登录，再联系甲子申核实并开通会员。";
  if(error&&error.context&&typeof error.context.json==="function"){try{const payload=await error.context.json();reason=payload.error||reason;}catch{}}
  return {loggedIn:true,active:false,reason};
-}
-async function loadPublicHtml(id){
- const {data,error}=await db.functions.invoke("get-private-dashboard",{body:{demo_id:id}});
- if(error){let message=data?.error||"读取公开看板失败。";if(error.context&&typeof error.context.json==="function"){try{const payload=await error.context.json();message=payload.error||message;}catch{}}throw new Error(message);}
- if(typeof data?.html!=="string")throw new Error(data?.error||"服务端未返回看板 HTML 内容。");
- return URL.createObjectURL(new Blob([data.html],{type:"text/html;charset=utf-8"}));
 }
 (async()=>{
  const status=document.getElementById("status");
@@ -45,19 +40,10 @@ async function loadPublicHtml(id){
   const semi=d.access_mode!=="public";
   status.textContent=d.name+(semi?" · 公开预览 / 会员完整访问":" · 完整公开看板");
   const frame=document.getElementById("board-frame");
-  if(!semi){
-   // New public boards use private storage + server-side delivery, exactly like the working
-   // semi-public HTML path but without login/member gating. Older external public URLs remain supported.
-   if(d.private_path){frame.src=await loadPublicHtml(id);}
-   else if(d.page_url){frame.src=d.page_url;}
-   else throw new Error("该公开看板尚未配置 HTML 文件或外部网址。");
-   document.getElementById("gate").style.display="none";
-   status.textContent=d.name+" · 完整公开看板";
-   return;
-  }
+  if(!semi){if(!d.page_url)throw new Error("该公开看板尚未配置网址。");frame.src=d.page_url;document.getElementById("gate").style.display="none";return;}
   if(!d.private_path)throw new Error("该半公开看板尚未上传完整 HTML 文件，请联系管理员。");
   if(!d.preview_url)throw new Error("该半公开看板尚未配置游客预览版 HTML，请联系管理员。");
-  // Preserve the original semi-public path: visitors see preview_url; members use a server-validated signed URL.
+  // Visitors always see the public preview. Only a server-validated active member receives a signed URL for the private full HTML.
   const access=await tryLoadMemberHtml(id);
   if(access.active){frame.src=access.url;document.getElementById("gate").style.display="none";status.textContent=d.name+" · 会员权限已验证，正在加载完整内容";return;}
   frame.setAttribute("scrolling","no");frame.classList.add("preview-locked");document.body.style.overflow="hidden";
