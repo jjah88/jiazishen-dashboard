@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<meta name="jiazishen-admin-build" content="single-upload-switch-fix-20261013">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理后台｜甲子申产业出海看板</title>
@@ -39,6 +40,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .notice{background:#f3f6f9;border-radius:6px;padding:12px;font-size:13px;line-height:1.7;color:#536579;margin-bottom:16px}
 .hidden{display:none!important}
 @media(max-width:650px){main{padding:0 12px 30px}.top{padding:20px 14px}.row{grid-template-columns:1fr}.panel{padding:16px}.item{align-items:flex-start;flex-direction:column}.item-actions{width:100%}}
+
+/* page_url is a compatibility field only; the admin never enters a public URL manually. */
+#page_url{display:none!important}
 </style>
 </head>
 <body>
@@ -607,7 +611,11 @@ $("upload-qr-button").addEventListener("click",()=>$("qr-file").click());
 $("qr-file").addEventListener("change",event=>uploadQrImage(event.target.files?.[0]));
 $("upload-private-dashboard-button").addEventListener("click",()=>$("private-dashboard-file").click());
 $("private-dashboard-file").addEventListener("change",event=>uploadPrivateDashboard(event.target.files?.[0]));
-$("access_mode").addEventListener("change",()=>{updateAccessModeUI();if($("access_mode").value==="public"){$("save-button").textContent=$("board-operation").value==="replace"?"上传并替换原看板":"上传并发布看板";}});
+$("access_mode").addEventListener("change",()=>{
+  updateAccessModeUI();
+  const op=$("board-operation")?.value||"new";
+  $("save-button").textContent=op==="replace"?"保存并替换原看板":"保存并发布看板";
+});
 $("board-operation").addEventListener("change",()=>{
   const op=$("board-operation").value;
   $("replace-board-wrap").classList.toggle("hidden",op!=="replace");
