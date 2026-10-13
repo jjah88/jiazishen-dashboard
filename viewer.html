@@ -56,12 +56,22 @@ async function tryLoadMemberHtml(id){
     status.textContent=d.name+" · 会员权限已验证，正在加载完整内容";
     return;
   }
-  // Render the visitor preview directly in the parent page. No iframe/srcdoc or public HTML file,
-  // so a stale preview URL or restrictive CSP on a storage object cannot break the visitor view.
-  frame.style.display="none";
+  // Fetch the sanitized, source-derived excerpt and render it as srcdoc. This avoids navigating
+  // directly to the Storage object (whose CSP may block inline CSS) while showing the real board header.
   const preview=document.getElementById("visitor-preview");
-  preview.innerHTML=buildVisitorPreview(d);
-  preview.style.display="block";
+  preview.style.display="none";
+  frame.style.display="block";
+  frame.setAttribute("sandbox","allow-same-origin");
+  let previewHtml="";
+  if(d.preview_url){
+    const response=await fetch(d.preview_url,{cache:"no-store"});
+    if(!response.ok)throw new Error("游客预览加载失败（HTTP "+response.status+"）。请管理员在后台编辑并保存一次该看板，以重新生成预览；无需重新上传完整版。");
+    previewHtml=await response.text();
+    if(!/<!doctype html|<html[\s>]/i.test(previewHtml))throw new Error("游客预览文件格式异常，请管理员在后台编辑并保存一次该看板以重新生成预览。");
+  }else{
+    throw new Error("该看板尚未生成真实内容预览。请管理员在后台编辑并保存一次；无需重新上传 HTML。");
+  }
+  frame.srcdoc=previewHtml;
   setGate(d,id,access.loggedIn,access.reason||"");
   status.textContent=d.name+(access.loggedIn?" · 预览模式（当前账号尚未开通会员）":" · 游客预览模式");
  }catch(e){console.error(e);document.getElementById("main").innerHTML='<div class="error">'+safe(e.message||"看板暂时无法打开")+'<br><a href="./">返回甲子申首页</a></div>';status.textContent="看板暂时无法打开";}

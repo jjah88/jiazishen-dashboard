@@ -123,7 +123,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
             <div><label for="access_mode">访问方式</label><select id="access_mode"><option value="semi">半公开：游客预览，会员查看完整内容</option><option value="public">完全公开</option></select></div>
             <div><label for="preview_percent">预览遮挡位置（20–70%）</label><input id="preview_percent" type="number" min="20" max="70" value="45"></div>
           </div>
-          <label for="page_url">公开完整看板网址（仅完全公开模式使用）</label><input id="page_url" type="url" placeholder="完全公开模式可用网址；半公开模式由私有 HTML 文件提供完整内容">
+          <input id="page_url" type="hidden" aria-hidden="true" tabindex="-1">
           <div id="private-dashboard-upload-panel" style="margin-top:14px;padding:14px;border:1px solid #e2e8ef;border-radius:8px;background:#f8fafb">
             <label for="private_path">完整看板 HTML（一次上传，后续可切换访问方式）</label><input id="private_path" type="text" readonly placeholder="上传完整 HTML 后自动填入私有文件路径">
             <div class="actions" style="margin-top:8px"><button type="button" id="upload-private-dashboard-button" class="secondary">上传看板 HTML（仅此一个上传按钮）</button><input id="private-dashboard-file" type="file" accept=".html,text/html" class="hidden"><span id="private-dashboard-upload-status" class="sub" style="align-self:center"></span></div>
@@ -205,18 +205,58 @@ function setBusy(b){$("save-button").disabled=b;}
 const QR_BUCKET = "consultation-qr";
 const PRIVATE_DASHBOARD_BUCKET = "private-dashboards";
 const PUBLIC_DASHBOARD_BUCKET = "dashboard-previews";
-function buildSafePreviewHtml(sourceHtml, fileName){
-  // Do not publish the source HTML or any of its scripts/data. Build a separate, metadata-only preview page.
-  const parsed = new DOMParser().parseFromString(sourceHtml, "text/html");
-  const sourceTitle = parsed.querySelector("h1")?.textContent?.trim() || parsed.querySelector("title")?.textContent?.trim() || fileName.replace(/\.html?$/i, "");
-  const headings = [...parsed.querySelectorAll("main h2, section h2")]
-    .map(el => (el.textContent || "").replace(/\s+/g, " ").trim())
-    .filter(Boolean).map(x => x.replace(/^\d+\s*[\/｜|·.-]*\s*/, "")).filter((x,i,a)=>a.indexOf(x)===i).slice(0,12);
-  const safeTitle = escapeHtml($("name").value.trim() || sourceTitle || "产业动态看板");
-  const safeSourceTitle = escapeHtml(sourceTitle || safeTitle);
-  const safeDescription = escapeHtml($("description").value.trim() || "本看板围绕目标市场、产业变化、政策法规、贸易准入、重点项目与企业资源进行持续梳理。");
-  const headingHtml = headings.length ? headings.map(h=>`<li>${escapeHtml(h)}</li>`).join("") : "<li>市场动态与产业结构</li><li>政策法规与市场准入</li><li>重点项目与企业资源</li>";
-  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${safeTitle}｜游客预览</title><style>*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#243247;font-family:Arial,"Microsoft YaHei",sans-serif;line-height:1.7}.wrap{max-width:900px;margin:0 auto;padding:28px 18px 48px}.brand{font-size:12px;letter-spacing:2px;color:#5d7694;font-weight:700}.hero{margin-top:12px;padding:30px;border-radius:14px;background:#12304c;color:#fff}.eyebrow{font-size:12px;color:#b8cce0;letter-spacing:1.5px}.hero h1{font-size:clamp(26px,5vw,38px);line-height:1.3;margin:12px 0}.hero p{color:#d9e5ef;margin:0}.pill{display:inline-block;margin-top:18px;padding:5px 10px;border:1px solid #7290ac;border-radius:20px;font-size:12px;color:#e7f0f7}.card{background:#fff;border:1px solid #dfe7ef;border-radius:12px;padding:22px;margin-top:16px}.card h2{font-size:18px;margin:0 0 12px;color:#173a5a}.card ul{margin:0;padding-left:22px}.card li{padding:5px 0}.foot{font-size:13px;color:#697b8d;margin-top:18px}.cta{margin-top:18px;padding:14px 16px;background:#edf3f8;border-left:3px solid #7b9ab6;border-radius:6px;color:#344e66;font-size:14px}</style></head><body><div class="wrap"><div class="brand">甲子申｜出海决策产业情报</div><section class="hero"><div class="eyebrow">RESEARCH DASHBOARD · PREVIEW</div><h1>${safeTitle}</h1><p>${safeDescription}</p><span class="pill">游客预览 · 完整内容需会员权限</span></section><section class="card"><h2>本看板内容框架</h2><ul>${headingHtml}</ul><div class="cta">当前页面仅展示看板简介与栏目框架。市场数据、详细分析、项目资料及企业名录等完整内容不包含在公开预览文件中。</div></section><div class="foot">源看板标题：${safeSourceTitle}<br>甲子申 · 中国企业出海决策情报</div></div></body></html>`;
+function buildSafePreviewHtml(sourceHtml, fileName, previewPercent){
+  // Generate a separate, static preview from the real dashboard's upper sections.
+  // All scripts and later sections are physically removed before publishing, not merely covered by a gate.
+  const parsed = new DOMParser().parseFromString(String(sourceHtml||""), "text/html");
+  parsed.querySelectorAll("script,noscript,iframe,object,embed,form,base,meta[http-equiv='refresh'],meta[http-equiv='Content-Security-Policy']").forEach(el=>el.remove());
+  parsed.querySelectorAll("[hidden],[aria-hidden='true'],.tab-pane:not(.active),.tab-content:not(.active),.tab-panel:not(.active),.hidden").forEach(el=>el.remove());
+  for(const el of [...parsed.querySelectorAll("*")]){
+    for(const attr of [...el.attributes]){
+      const n=attr.name.toLowerCase();
+      if(n.startsWith("on") || n==="srcdoc" || n.startsWith("data-private") || n==="data-full-content") el.removeAttribute(attr.name);
+      if((n==="href"||n==="src"||n==="action") && /^\s*javascript:/i.test(attr.value)) el.removeAttribute(attr.name);
+    }
+  }
+  // Remove external scripts/styles to keep the preview static and avoid CSP-dependent behavior.
+  parsed.querySelectorAll("link[rel='stylesheet'],link[rel='preload'][as='script'],script").forEach(el=>el.remove());
+  const candidates=[...parsed.querySelectorAll("main,.wrap,.container,.page,#app,body")];
+  const contentScore=el=>[...el.children].filter(c=>c.matches("section,article")||c.classList.contains("hero")||c.classList.contains("section")||c.classList.contains("panel")).length;
+  let container=candidates.sort((a,b)=>contentScore(b)-contentScore(a))[0]||parsed.body;
+  // If a generic template has no obvious section wrapper, keep its first few visible content blocks.
+  let blocks=[...container.children].filter(c=>c.matches("section,article")||c.classList.contains("hero")||c.classList.contains("section")||c.classList.contains("panel"));
+  if(!blocks.length){
+    const main=parsed.querySelector("main")||parsed.body;
+    container=main;
+    blocks=[...container.children].filter(c=>!['SCRIPT','STYLE','LINK','META'].includes(c.tagName));
+  }
+  const pct=Math.max(20,Math.min(70,Number(previewPercent)||45));
+  const extra=Math.floor((pct-20)/25); // 20%=hero only; 45%=hero+one section; 70%=hero+two sections
+  const keepCount=Math.min(blocks.length,Math.max(1,1+extra));
+  if(blocks.length){
+    const lastKept=blocks[keepCount-1];
+    let removeFollowing=false;
+    for(const child of [...container.children]){
+      if(child===lastKept){removeFollowing=true;continue;}
+      if(removeFollowing) child.remove();
+      else if(blocks.includes(child) && blocks.indexOf(child)>=keepCount) child.remove();
+    }
+    // Avoid publishing hidden or alternate-tab content elsewhere in the truncated container.
+    container.querySelectorAll("[hidden],.tab-pane:not(.active),.tab-content:not(.active),.tab-panel:not(.active),.hidden").forEach(el=>el.remove());
+  }
+  // Add a clear end to the excerpt. This is part of the generated public preview, not the private source.
+  const endCard=parsed.createElement("section");
+  endCard.setAttribute("style","margin:24px auto;padding:18px 22px;max-width:1100px;background:#edf2f6;border-left:4px solid #c5a46a;color:#30485e;font:14px/1.8 -apple-system,BlinkMacSystemFont,Segoe UI,Microsoft YaHei,sans-serif");
+  endCard.textContent="以上为产业看板公开预览节选。完整市场数据、详细研判、项目资料及企业名录仅向通过服务端验证的有效会员开放。";
+  (container||parsed.body).appendChild(endCard);
+  parsed.documentElement.lang="zh-CN";
+  let charset=parsed.querySelector("meta[charset]");
+  if(!charset){charset=parsed.createElement("meta");charset.setAttribute("charset","utf-8");parsed.head.prepend(charset);}else charset.setAttribute("charset","utf-8");
+  let viewport=parsed.querySelector("meta[name='viewport']");
+  if(!viewport){viewport=parsed.createElement("meta");viewport.name="viewport";viewport.content="width=device-width,initial-scale=1";parsed.head.appendChild(viewport);}
+  const title=parsed.querySelector("title")||parsed.head.appendChild(parsed.createElement("title"));
+  title.textContent=($('name').value.trim()||title.textContent||String(fileName||'产业研究看板').replace(/\.html?$/i,''))+"｜游客预览";
+  return "<!doctype html>\n"+parsed.documentElement.outerHTML;
 }
 function publicObjectPathFromUrl(url){
   try{
@@ -241,8 +281,17 @@ async function publishBlobToPublic(blob,fileName){
 async function publishPrivateMaster(path){
   if(!path)throw new Error("尚未上传完整版。请先使用唯一的上传按钮上传一次 HTML 文件。");
   const {data:blob,error:downloadError}=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).download(path);
-  if(downloadError)throw new Error("无法读取私有完整版，暂时不能切换为完全公开。请执行修复包内的 storage-admin-policies.sql 后重试。"+downloadError.message);
+  if(downloadError)throw new Error("切换为完全公开失败：管理员暂时无法读取私有完整版（"+(downloadError.message||"Storage 权限不足")+"）。请在 Supabase SQL Editor 执行修复包内 storage-admin-policies.sql 一次，然后重新点击“上传并发布看板”。文件不必重新上传。");
   return await publishBlobToPublic(blob,path.split("/").pop()||"dashboard.html");
+}
+async function publishPreviewFromPrivateMaster(path){
+  if(!path)throw new Error("无法生成游客预览：找不到私有完整版路径。");
+  const {data:blob,error}=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).download(path);
+  if(error)throw new Error("无法读取私有完整版以生成游客预览："+(error.message||"Storage 权限不足"));
+  const source=await blob.text();
+  const previewHtml=buildSafePreviewHtml(source,path.split("/").pop()||"dashboard.html",Number($("preview_percent").value)||45);
+  const previewBlob=new Blob([previewHtml],{type:"text/html;charset=utf-8"});
+  return await publishBlobToPublic(previewBlob,"visitor-preview.html");
 }
 async function uploadPrivateDashboard(file){
   if(!file)return;
@@ -256,16 +305,18 @@ async function uploadPrivateDashboard(file){
     const privateResult=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"0",upsert:false,contentType:"text/html;charset=utf-8"});
     if(privateResult.error)throw privateResult.error;
     $("private_path").value=privateResult.data.path;
-    // Preview HTML is no longer uploaded publicly. viewer.html renders a metadata-only preview itself,
-    // avoiding restrictive CSP headers and preventing source HTML/data from being exposed.
-    $("preview_url").value="";
-    if($("access_mode").value==="public"){
-      try{$("page_url").value=await publishBlobToPublic(file,safeName);}
-      catch(e){setStatus("private-dashboard-upload-status","私有完整版已安全保存；自动发布公开副本失败。可先切换为半公开保存，或检查存储权限。错误："+(e.message||String(e)));return;}
-    }else{
-      $("page_url").value="";
+    $("page_url").value="";
+    // Generate a real, static excerpt from the top of this same file. The user uploads only once.
+    try{
+      const previewHtml=buildSafePreviewHtml(await file.text(),file.name,Number($("preview_percent").value)||45);
+      const previewBlob=new Blob([previewHtml],{type:"text/html;charset=utf-8"});
+      $("preview_url").value=await publishBlobToPublic(previewBlob,"visitor-preview.html");
+      setStatus("private-dashboard-upload-status","上传完成：完整版已私有保存，游客预览已从真实看板头部自动生成。点击发布即可；以后切换访问方式无需重新上传。");
+    }catch(previewError){
+      console.error(previewError);
+      $("preview_url").value="";
+      setStatus("private-dashboard-upload-status","完整版已上传；自动生成游客预览未完成。点击发布时系统会再次尝试，不需要重新选择文件。原因："+(previewError.message||String(previewError)));
     }
-    setStatus("private-dashboard-upload-status","上传完成。完整版已保存；游客预览由 viewer.html 直接生成，不再依赖单独的预览 HTML 文件。点击下方保存按钮发布看板。之后可直接切换访问方式，无需重新上传。 ");
   }catch(e){console.error(e);setStatus("private-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认私有存储桶的上传权限。");}
   finally{button.disabled=false;$("private-dashboard-file").value="";}
 }
@@ -273,7 +324,7 @@ function updateAccessModeUI(){
   const mode=$("access_mode").value;
   $("page_url").required=false;
   $("private-dashboard-upload-panel").style.borderColor=mode==="semi"?"#c5a46a":"#e2e8ef";
-  $("private-dashboard-upload-status").textContent=mode==="semi"?"所有模式均只需上传一次 HTML；游客预览由 viewer.html 直接生成。":"完全公开模式自动发布已上传的私有完整版；无需再次选择文件。";
+  $("private-dashboard-upload-status").textContent=mode==="semi"?"半公开：保存后游客看到本页生成的安全预览，会员验证后查看私有完整版。无需单独上传预览文件。":"完全公开：保存时从私有完整版自动生成公开副本。若是从半公开切换，无需重新上传；首次切换需管理员存储读取权限。";
 }
 function refreshQrPreview(url){
   const wrap=$("qr-preview-wrap"),img=$("qr-preview");
@@ -444,19 +495,33 @@ async function saveRecord(event){
       r.tags=$("tags").value.split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
       const currentId=$("record-id").value;
       const oldRecord=currentId?(cache.demos||[]).find(x=>String(x.id)===String(currentId)):null;
-      // Access mode may change later; keep the private master and derive the needed delivery copy.
+      // One private master is the source of truth. Public mode gets a generated public copy;
+      // semi-public mode never points to any public HTML file.
+      const previousPageUrl=oldRecord?.page_url||r.page_url||"";
+      const previousPublicPath=publicObjectPathFromUrl(previousPageUrl);
+      if(!r.private_path)throw new Error("请先点击唯一的“上传看板 HTML”按钮上传一次完整 HTML。");
       if(r.access_mode==="public"){
-        if(!r.page_url && r.private_path) r.page_url=await publishPrivateMaster(r.private_path);
-        if(!r.page_url)throw new Error("请先使用唯一的上传按钮上传一次 HTML 文件，或填写外部公开网址。");
+        if(oldRecord?.access_mode==="public" && oldRecord.private_path===r.private_path && previousPageUrl && previousPublicPath){
+          // Keep the existing public copy when only metadata changed.
+          r.page_url=previousPageUrl;
+        }else{
+          // First publication, semi->public, or replacing the source HTML: publish from private master.
+          r.page_url=await publishPrivateMaster(r.private_path);
+          if(previousPublicPath && previousPageUrl!==r.page_url){
+            const {error:removeOldError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPublicPath]);
+            if(removeOldError)throw new Error("新公开副本已生成，但旧公开副本未能撤下。请先检查 dashboard-previews 删除权限，避免旧版本继续公开。错误："+removeOldError.message);
+          }
+        }
+        r.preview_url=null;
       }else{
-        if(!r.private_path)throw new Error("半公开模式需要私有完整版。请先使用唯一的上传按钮上传一次 HTML 文件。");
-        const oldPublicPath=oldRecord?publicObjectPathFromUrl(oldRecord.page_url):null;
-        if(oldRecord && oldRecord.access_mode==="public" && oldPublicPath){
-          const {error:removeError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([oldPublicPath]);
-          if(removeError)throw new Error("无法撤下此前公开的 HTML，已取消本次切换以避免完整版继续公开。请检查 dashboard-previews 存储桶删除权限后重试。"+removeError.message);
+        // Ensure a real, source-derived preview exists before removing a former public full copy.
+        if(!r.preview_url){r.preview_url=await publishPreviewFromPrivateMaster(r.private_path);}
+        // Remove any system-managed public full copy only after preview generation succeeded.
+        if(previousPublicPath){
+          const {error:removeError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPublicPath]);
+          if(removeError)throw new Error("无法撤下公开副本，已取消切换，避免完整版继续公开。请在 Supabase 执行修复包内 SQL 并确认管理员权限。错误："+removeError.message);
         }
         r.page_url=null;
-        r.preview_url=null;
       }
       const op=$("board-operation")?.value||"new";
       if(op==="replace"&&!$("record-id").value)throw new Error("请先从列表选择要替换的看板。");
