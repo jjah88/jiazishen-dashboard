@@ -112,20 +112,25 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
         <div id="demo-fields" class="hidden">
           <div class="row">
+            <div><label for="board-operation">看板操作</label><select id="board-operation"><option value="new">新增看板并发布</option><option value="replace">替换已有看板内容</option></select></div>
+            <div id="replace-board-wrap" class="hidden"><label for="replace-board-id">选择要替换的看板</label><select id="replace-board-id"><option value="">请选择看板</option></select></div>
+          </div>
+          <div class="row">
             <div><label for="country_id">关联国家</label><select id="country_id"><option value="">请选择国家</option></select></div>
             <div><label for="industry_id">关联产业</label><select id="industry_id"><option value="">请选择产业</option></select></div>
           </div>
-          <label for="page_url">公开看板网址（公开/半公开模式填写）</label><input id="page_url" type="url" placeholder="https://...；会员专享模式可留空">
-          <div id="private-dashboard-upload-panel" style="margin-top:14px;padding:14px;border:1px solid #e2e8ef;border-radius:8px;background:#f8fafb">
-            <label for="private_path">会员专享 HTML 文件（上传到私有存储）</label><input id="private_path" type="text" readonly placeholder="选择 HTML 文件上传后自动填入存储路径">
-            <div class="actions" style="margin-top:8px"><button type="button" id="upload-private-dashboard-button" class="secondary">上传完整看板 HTML</button><input id="private-dashboard-file" type="file" accept=".html,text/html" class="hidden"><span id="private-dashboard-upload-status" class="sub" style="align-self:center"></span></div>
-            <div class="sub" style="margin-top:7px;line-height:1.7">仅用于“会员专享”模式。建议上传自包含的单文件 HTML（图表库可使用 CDN）。若页面依赖同目录图片、JSON、CSS 等文件，需要另外设计资源打包和授权，不能只上传主 HTML。</div>
-          </div>
           <div class="row">
-            <div><label for="access_mode">访问方式</label><select id="access_mode"><option value="public">完全公开</option><option value="semi">半公开预览 + 定制咨询</option><option value="members">会员专享（私有 HTML）</option></select></div>
-            <div><label for="preview_percent">预览区域比例（20–70%）</label><input id="preview_percent" type="number" min="20" max="70" value="45"></div>
+            <div><label for="access_mode">访问方式</label><select id="access_mode"><option value="semi">半公开：游客预览，会员查看完整内容</option><option value="public">完全公开</option></select></div>
+            <div><label for="preview_percent">预览遮挡位置（20–70%）</label><input id="preview_percent" type="number" min="20" max="70" value="45"></div>
           </div>
-          <label for="preview_url">独立预览版网址（半公开建议填写）</label><input id="preview_url" type="url" placeholder="https://...">
+          <label for="page_url">公开完整看板网址（仅完全公开模式使用）</label><input id="page_url" type="url" placeholder="完全公开模式可用网址；半公开模式由私有 HTML 文件提供完整内容">
+          <div id="private-dashboard-upload-panel" style="margin-top:14px;padding:14px;border:1px solid #e2e8ef;border-radius:8px;background:#f8fafb">
+            <label for="private_path">完整看板 HTML（半公开模式存入私有存储）</label><input id="private_path" type="text" readonly placeholder="上传完整 HTML 后自动填入私有文件路径">
+            <div class="actions" style="margin-top:8px"><button type="button" id="upload-private-dashboard-button" class="secondary">上传完整看板 HTML</button><input id="private-dashboard-file" type="file" accept=".html,text/html" class="hidden"><span id="private-dashboard-upload-status" class="sub" style="align-self:center"></span></div>
+            <label for="preview_url">游客预览版 HTML 网址</label><input id="preview_url" type="url" placeholder="上传预览版 HTML 后自动填入，也可填写已发布的预览网址">
+            <div class="actions" style="margin-top:8px"><button type="button" id="upload-preview-dashboard-button" class="secondary">上传游客预览版 HTML</button><input id="preview-dashboard-file" type="file" accept=".html,text/html" class="hidden"><span id="preview-dashboard-upload-status" class="sub" style="align-self:center"></span></div>
+            <div class="sub" style="margin-top:7px;line-height:1.7">半公开模式必须分别准备“完整 HTML”和“预览版 HTML”。预览版只放游客可见内容；完整 HTML 存入私有存储，只有有效会员经服务端验证后才能访问。建议两份文件都使用自包含 HTML（图片、CSS、数据内嵌或使用 CDN）。</div>
+          </div>
           <div class="row">
             <div>
               <label for="qr_url">微信咨询二维码图片</label>
@@ -135,8 +140,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
             </div>
             <div><label for="tags">搜索标签（逗号分隔）</label><input id="tags" placeholder="市场准入，认证，贸易数据"></div>
           </div>
-          <label for="consult_text">半公开咨询提示文案</label><textarea id="consult_text" maxlength="1000" placeholder="当前为预览版。完整产业数据与深度研究，可扫码咨询定制服务。"></textarea>
-          <div class="notice">半公开模式请尽量配置独立的预览版 HTML。只在完整页面上覆盖遮罩不能保护源页面中的数据。</div>
+          <label for="consult_text">会员提示文案</label><textarea id="consult_text" maxlength="1000" placeholder="当前为公开预览。注册并登录后，开通甲子申会员即可查看完整产业研究内容。"></textarea>
+          <div class="notice">半公开访问流程：游客看预览 → 注册/登录 → 管理员核实并开通会员 → 查看完整内容。不要把完整 HTML 上传到公开 GitHub Pages 或公开预览桶。</div>
         </div>
 
         <div id="topic-fields" class="hidden">
@@ -200,14 +205,55 @@ function setStatus(id,msg){$(id).textContent=msg;}
 function setBusy(b){$("save-button").disabled=b;}
 const QR_BUCKET = "consultation-qr";
 const PRIVATE_DASHBOARD_BUCKET = "private-dashboards";
+const PUBLIC_DASHBOARD_BUCKET = "dashboard-previews";
 async function uploadPrivateDashboard(file){
   if(!file)return;
   if(!file.name.toLowerCase().endsWith(".html") && file.type!=="text/html"){setStatus("private-dashboard-upload-status","请选择 .html 文件。");return;}
   if(file.size>20*1024*1024){setStatus("private-dashboard-upload-status","文件不能超过 20MB。");return;}
-  const button=$("upload-private-dashboard-button");button.disabled=true;setStatus("private-dashboard-upload-status","正在上传完整看板……");
-  try{const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";const path=`${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;const result=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"0",upsert:false,contentType:"text/html"});if(result.error)throw result.error;$("private_path").value=result.data.path;setStatus("private-dashboard-upload-status","上传成功。保存看板记录后才会关联该文件。");}catch(e){console.error(e);setStatus("private-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认已执行会员权限 SQL，并确认当前账号为管理员。");}finally{button.disabled=false;$("private-dashboard-file").value="";}
+  const button=$("upload-private-dashboard-button");button.disabled=true;setStatus("private-dashboard-upload-status","正在上传完整 HTML……");
+  try{
+    const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
+    const path=`boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;
+    if($("access_mode").value==="public"){
+      const result=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(`public/${path}`,file,{cacheControl:"60",upsert:false,contentType:"text/html"});
+      if(result.error)throw result.error;
+      const pub=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(result.data.path);
+      if(!pub.data?.publicUrl)throw new Error("上传成功，但未能生成公开网址");
+      $("page_url").value=pub.data.publicUrl;
+      $("private_path").value="";
+      setStatus("private-dashboard-upload-status","公开 HTML 已上传并填入网址。点击“上传并发布看板”保存记录。");
+    }else{
+      const result=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"0",upsert:false,contentType:"text/html"});
+      if(result.error)throw result.error;
+      $("private_path").value=result.data.path;
+      setStatus("private-dashboard-upload-status","完整 HTML 已安全上传。保存/发布看板后生效；替换时旧文件会保留作备份。");
+    }
+  }catch(e){console.error(e);setStatus("private-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认已执行新的权限 SQL，并确认当前账号为管理员。");}
+  finally{button.disabled=false;$("private-dashboard-file").value="";}
 }
-function updateAccessModeUI(){const mode=$("access_mode").value;$("page_url").required=currentType==="demos"&&mode!=="members";$("private-dashboard-upload-panel").style.borderColor=mode==="members"?"#c5a46a":"#e2e8ef";$("private-dashboard-upload-status").textContent=mode==="members"?"会员专享模式需要上传完整 HTML 文件。":"会员专享文件为可选项。";}
+async function uploadPreviewDashboard(file){
+  if(!file)return;
+  if(!file.name.toLowerCase().endsWith(".html") && file.type!=="text/html"){setStatus("preview-dashboard-upload-status","请选择 .html 文件。");return;}
+  if(file.size>20*1024*1024){setStatus("preview-dashboard-upload-status","文件不能超过 20MB。");return;}
+  const button=$("upload-preview-dashboard-button");button.disabled=true;setStatus("preview-dashboard-upload-status","正在上传游客预览版……");
+  try{
+    const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"preview.html";
+    const path=`previews/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;
+    const result=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"60",upsert:false,contentType:"text/html"});
+    if(result.error)throw result.error;
+    const pub=db.storage.from(PUBLIC_DASHBOARD_BUCKET).getPublicUrl(result.data.path);
+    if(!pub.data?.publicUrl)throw new Error("上传成功，但未能生成预览网址");
+    $("preview_url").value=pub.data.publicUrl;
+    setStatus("preview-dashboard-upload-status","预览版已上传并填入网址。请确认该文件只包含允许游客查看的内容。");
+  }catch(e){console.error(e);setStatus("preview-dashboard-upload-status","上传失败："+(e.message||String(e))+"。请确认已执行新的权限 SQL，并确认预览存储桶已创建。");}
+  finally{button.disabled=false;$("preview-dashboard-file").value="";}
+}
+function updateAccessModeUI(){
+  const mode=$("access_mode").value;
+  $("page_url").required=currentType==="demos"&&mode==="public";
+  $("private-dashboard-upload-panel").style.borderColor=mode==="semi"?"#c5a46a":"#e2e8ef";
+  $("private-dashboard-upload-status").textContent=mode==="semi"?"半公开模式需上传完整 HTML，并另备游客预览版。":"完全公开模式使用公开看板网址，或上传公开 HTML 文件。";
+}
 function refreshQrPreview(url){
   const wrap=$("qr-preview-wrap"),img=$("qr-preview");
   if(url){img.src=url;wrap.classList.remove("hidden");}else{img.removeAttribute("src");wrap.classList.add("hidden");}
@@ -236,19 +282,24 @@ function resetForm(){
   $("sort_order").value="1";
   $("is_published").value="true";
   $("form-title").textContent="新增"+configs[currentType].label;
-  $("save-button").textContent="保存内容";
+  $("save-button").textContent=currentType==="demos"?"上传并发布看板":"保存内容";
   $("country_id").value="";
   $("industry_id").value="";
-  $("access_mode").value="public";
+  $("access_mode").value="semi";
+  if($("board-operation"))$("board-operation").value="new";
+  if($("replace-board-id"))$("replace-board-id").value="";
+  if($("replace-board-wrap"))$("replace-board-wrap").classList.add("hidden");
   $("preview_url").value="";
   $("preview_percent").value="45";
   $("private_path").value="";
   setStatus("private-dashboard-upload-status", "");
+  if($("preview-dashboard-upload-status"))setStatus("preview-dashboard-upload-status", "");
   $("qr_url").value="";
   refreshQrPreview("");
   setStatus("qr-upload-status","");
-  $("consult_text").value="当前为预览版。完整产业数据与深度研究，可扫码咨询定制服务。";
+  $("consult_text").value="当前为公开预览。注册并登录后，开通甲子申会员即可查看完整产业研究内容。";
   $("tags").value="";
+  updateAccessModeUI();
 }
 function showType(type){
   currentType=type;
@@ -262,7 +313,7 @@ function showType(type){
   $("member-panel").classList.add("hidden");
   $("members-tab").classList.remove("active");
   $("code").required=false;
-  $("page_url").required=type==="demos" && $("access_mode").value!=="members";
+  $("page_url").required=type==="demos" && $("access_mode").value==="public";
   $("topic_url").required=type==="topics";
   $("form-title").textContent="新增"+configs[type].label;
   updateAccessModeUI();
@@ -283,6 +334,11 @@ async function refreshData(){
 function fillSelects(){
   $("country_id").innerHTML='<option value="">请选择国家</option>'+cache.countries.map(r=>`<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}</option>`).join("");
   $("industry_id").innerHTML='<option value="">请选择产业</option>'+cache.industries.map(r=>`<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}</option>`).join("");
+  if($("replace-board-id")){
+    const selected=$("replace-board-id").value;
+    $("replace-board-id").innerHTML='<option value="">请选择要替换的看板</option>'+cache.demos.map(r=>`<option value="${escapeHtml(r.id)}">${escapeHtml(r.name)}${r.is_published===false?'（未发布）':''}</option>`).join("");
+    if(selected&&cache.demos.some(r=>r.id===selected))$("replace-board-id").value=selected;
+  }
 }
 function relatedText(type,r){
   if(type==="demos"){
@@ -297,7 +353,7 @@ function renderList(){
   $("record-list").innerHTML=rows.length?rows.map(r=>{
     const related=relatedText(currentType,r);
     const url=r.page_url||"";
-    const mode=currentType==="demos"?(r.access_mode==="semi"?"半公开预览":r.access_mode==="members"?"会员专享":"完全公开"):"";
+    const mode=currentType==="demos"?(r.access_mode==="semi"?"半公开（会员看完整）":"完全公开"):"";
      const tags=currentType==="demos"&&Array.isArray(r.tags)&&r.tags.length?"<br>标签："+escapeHtml(r.tags.join("、")):"";
      return `<div class="item"><div><div class="item-title">${escapeHtml(r.name)} ${r.is_published===false?'<span style="color:#a33a3a;font-size:12px">（未发布）</span>':''} ${mode?'<span style="color:#8b6a31;font-size:12px">（'+mode+'）</span>':''}</div><div class="item-desc">${escapeHtml(related?related+" · ":"")}${escapeHtml(r.description||"")}${url?"<br>"+escapeHtml(url):""}${currentType==="demos"&&r.private_path?"<br>私有文件：已配置":""}${tags}</div></div><div class="item-actions"><button type="button" class="secondary" data-edit="${escapeHtml(r.id)}">编辑</button><button type="button" class="danger" data-delete="${escapeHtml(r.id)}">删除</button></div></div>`;
   }).join(""):'<div class="status">暂无记录，可以在上方新增。</div>';
@@ -318,18 +374,24 @@ function editRecord(id){
   if(currentType==="demos"){
     $("page_url").value=r.page_url||"";
     $("private_path").value=r.private_path||"";
-    $("access_mode").value=r.access_mode||"public";
+    $("access_mode").value=r.access_mode==="public"?"public":"semi";
     updateAccessModeUI();
     $("preview_url").value=r.preview_url||"";
     $("preview_percent").value=r.preview_percent??45;
     $("qr_url").value=r.qr_url||"";
     refreshQrPreview(r.qr_url||"");
-    $("consult_text").value=r.consult_text||"当前为预览版。完整产业数据与深度研究，可扫码咨询定制服务。";
+    $("consult_text").value=r.consult_text||"当前为公开预览。注册并登录后，开通甲子申会员即可查看完整产业研究内容。";
     $("tags").value=Array.isArray(r.tags)?r.tags.join("，"):(r.tags||"");
   }
   if(currentType==="topics")$("topic_url").value=r.page_url||"";
   $("form-title").textContent="编辑"+configs[currentType].label;
   $("save-button").textContent="保存修改";
+  if(currentType==="demos"&&$("board-operation")){
+    $("board-operation").value="replace";
+    $("replace-board-wrap").classList.remove("hidden");
+    $("replace-board-id").value=r.id;
+    $("save-button").textContent="上传并替换原看板";
+  }
   $("record-form").scrollIntoView({behavior:"smooth",block:"start"});
 }
 async function saveRecord(event){
@@ -359,12 +421,14 @@ async function saveRecord(event){
       r.qr_url=$("qr_url").value.trim()||null;
       r.consult_text=$("consult_text").value.trim()||null;
       r.tags=$("tags").value.split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
-      if(r.access_mode==="members"&&!r.private_path)throw new Error("会员专享模式请先上传完整看板 HTML 文件");
-      if(r.access_mode!=="members"&&!r.page_url)throw new Error("公开或半公开模式请填写看板网址");
-      if(r.access_mode==="semi"&&!r.preview_url) {
-        const ok=confirm("你选择了半公开模式，但没有填写独立预览版网址。继续保存可能会使用完整看板作为预览，遮罩不能保护原始页面内容。仍要继续吗？");
-        if(!ok)throw new Error("已取消保存，请填写独立预览版网址。");
-      }
+      if(r.access_mode==="semi"){
+        if(!r.private_path)throw new Error("半公开模式请先上传完整看板 HTML（私有存储）。");
+        if(!r.preview_url)throw new Error("半公开模式请上传游客预览版 HTML，或填写预览版网址。");
+        r.page_url=null;
+      }else if(!r.page_url)throw new Error("完全公开模式请填写公开网址，或使用“上传完整看板 HTML”上传公开文件。");
+      const op=$("board-operation")?.value||"new";
+      if(op==="replace"&&!$("record-id").value)throw new Error("请先从列表选择要替换的看板。");
+      if(op==="new"&&$("record-id").value)$("record-id").value="";
     }
     if(type==="topics"){
       r.page_url=$("topic_url").value.trim();
@@ -376,7 +440,7 @@ async function saveRecord(event){
       : await db.from(configs[type].table).insert(r);
     if(result.error)throw result.error;
     resetForm();await refreshData();
-    setStatus("admin-status","保存成功，公开首页将读取最新数据。");
+    setStatus("admin-status",type==="demos"?"看板已保存并发布/替换成功。首页将读取最新版本；旧的私有 HTML 文件保留在存储中作为备份。":"保存成功，公开首页将读取最新数据。");
   }catch(e){setStatus("admin-status","保存失败："+(e.message||String(e)));}
   finally{setBusy(false);}
 }
@@ -394,7 +458,7 @@ function localDateTimeValue(date){const d=new Date(date.getTime()-date.getTimezo
 function showMemberManager(){document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));$("members-tab").classList.add("active");$("content-form-panel").classList.add("hidden");$("content-list-panel").classList.add("hidden");$("member-panel").classList.remove("hidden");$("form-title").textContent="会员管理";}
 async function searchMember(){const email=$("member-email-search").value.trim();if(!email){setStatus("member-search-status","请先填写用户注册邮箱。");return;}setStatus("member-search-status","正在查找账号……");$("member-search-results").innerHTML="";$("member-edit-area").classList.add("hidden");try{const {data,error}=await db.from("member_profiles").select("user_id,email,created_at").ilike("email",email).limit(10);if(error)throw error;if(!data||!data.length){setStatus("member-search-status","没有找到该邮箱对应的账号。请确认用户已经注册并完成邮箱验证，或检查邮箱是否拼写正确。");return;}$("member-search-results").innerHTML=data.map(u=>`<div class="item"><div><div class="item-title">${escapeHtml(u.email)}</div><div class="item-desc">用户 ID：${escapeHtml(u.user_id)}<br>注册时间：${u.created_at?new Date(u.created_at).toLocaleString("zh-CN"):"—"}</div></div><div class="item-actions"><button type="button" class="secondary" data-select-member="${escapeHtml(u.user_id)}">管理该用户</button></div></div>`).join("");setStatus("member-search-status",`找到 ${data.length} 个匹配账号。请选择要开通的用户。`);}catch(e){setStatus("member-search-status","查找失败："+(e.message||String(e))+"。请确认已执行会员权限 SQL。");}}
 async function selectMember(userId){const {data:user,error:userError}=await db.from("member_profiles").select("user_id,email").eq("user_id",userId).single();if(userError){setStatus("member-status",userError.message);return;}selectedMember=user;$("member-user-id").value=user.user_id;$("member-selected-title").textContent="会员权益设置 · "+user.email;const {data:ent,error}=await db.from("member_entitlements").select("status,starts_at,expires_at,note").eq("user_id",user.user_id).maybeSingle();if(error){setStatus("member-status",error.message);return;}const now=new Date();$("member-start").value=ent?.starts_at?localDateTimeValue(new Date(ent.starts_at)):localDateTimeValue(now);$("member-expiry").value=ent?.expires_at?localDateTimeValue(new Date(ent.expires_at)):localDateTimeValue(new Date(now.getTime()+365*24*60*60*1000));$("member-note").value=ent?.note||"";$("member-edit-area").classList.remove("hidden");setStatus("member-status",ent?`当前状态：${ent.status}；到期时间：${ent.expires_at?new Date(ent.expires_at).toLocaleString("zh-CN"):"未设置"}`:"该用户尚无会员记录。可以在核实付款后开通。");}
-async function saveMembership(revoke=false){if(!selectedMember){setStatus("member-status","请先查找并选择用户。");return;}const button=revoke?$("member-revoke-button") : $("member-grant-button");button.disabled=true;try{const start=$("member-start").value?new Date($("member-start").value).toISOString():new Date().toISOString();const expiry=$("member-expiry").value?new Date($("member-expiry").value).toISOString():null;if(!revoke&&expiry&&new Date(expiry)<=new Date(start))throw new Error("到期时间必须晚于开通时间。");const payload={user_id:selectedMember.user_id,status:revoke?"revoked":"active",starts_at:start,expires_at:expiry,note:$("member-note").value.trim()||null,granted_by:(await db.auth.getUser()).data.user?.id||null,updated_at:new Date().toISOString()};const {error}=await db.from("member_entitlements").upsert(payload,{onConflict:"user_id"});if(error)throw error;setStatus("member-status",revoke?"已撤销该用户的会员权限。":"会员已开通/更新。该账号刷新后即可访问全部已配置的会员专享看板。", "success");}catch(e){setStatus("member-status","操作失败："+(e.message||String(e)));}finally{button.disabled=false;}}
+async function saveMembership(revoke=false){if(!selectedMember){setStatus("member-status","请先查找并选择用户。");return;}const button=revoke?$("member-revoke-button") : $("member-grant-button");button.disabled=true;try{const start=$("member-start").value?new Date($("member-start").value).toISOString():new Date().toISOString();const expiry=$("member-expiry").value?new Date($("member-expiry").value).toISOString():null;if(!revoke&&expiry&&new Date(expiry)<=new Date(start))throw new Error("到期时间必须晚于开通时间。");const payload={user_id:selectedMember.user_id,status:revoke?"revoked":"active",starts_at:start,expires_at:expiry,note:$("member-note").value.trim()||null,granted_by:(await db.auth.getUser()).data.user?.id||null,updated_at:new Date().toISOString()};const {error}=await db.from("member_entitlements").upsert(payload,{onConflict:"user_id"});if(error)throw error;setStatus("member-status",revoke?"已撤销该用户的会员权限。":"会员已开通/更新。该账号刷新后即可访问所有已配置半公开看板的完整内容。", "success");}catch(e){setStatus("member-status","操作失败："+(e.message||String(e)));}finally{button.disabled=false;}}
 $("members-tab").addEventListener("click",showMemberManager);$("member-search-button").addEventListener("click",searchMember);$("member-email-search").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchMember();}});$("member-search-results").addEventListener("click",e=>{const b=e.target.closest("[data-select-member]");if(b)selectMember(b.dataset.selectMember);});$("member-grant-button").addEventListener("click",()=>saveMembership(false));$("member-revoke-button").addEventListener("click",()=>{if(confirm("确定撤销该用户的会员权限吗？"))saveMembership(true);});
 
 $("login-form").addEventListener("submit",async e=>{
@@ -446,7 +510,24 @@ $("upload-qr-button").addEventListener("click",()=>$("qr-file").click());
 $("qr-file").addEventListener("change",event=>uploadQrImage(event.target.files?.[0]));
 $("upload-private-dashboard-button").addEventListener("click",()=>$("private-dashboard-file").click());
 $("private-dashboard-file").addEventListener("change",event=>uploadPrivateDashboard(event.target.files?.[0]));
-$("access_mode").addEventListener("change",updateAccessModeUI);
+$("upload-preview-dashboard-button").addEventListener("click",()=>$("preview-dashboard-file").click());
+$("preview-dashboard-file").addEventListener("change",event=>uploadPreviewDashboard(event.target.files?.[0]));
+$("access_mode").addEventListener("change",()=>{updateAccessModeUI();if($("access_mode").value==="public"){$("save-button").textContent=$("board-operation").value==="replace"?"上传并替换原看板":"上传并发布看板";}});
+$("board-operation").addEventListener("change",()=>{
+  const op=$("board-operation").value;
+  $("replace-board-wrap").classList.toggle("hidden",op!=="replace");
+  if(op==="new"){
+    resetForm();
+    $("board-operation").value="new";
+    $("form-title").textContent="新增研究看板并发布";
+    $("save-button").textContent="上传并发布看板";
+    $("is_published").value="true";
+  }else{
+    $("save-button").textContent="上传并替换原看板";
+    if($("replace-board-id").value)editRecord($("replace-board-id").value);
+  }
+});
+$("replace-board-id").addEventListener("change",()=>{const id=$("replace-board-id").value;if(id)editRecord(id);});
 $("qr_url").addEventListener("input",()=>refreshQrPreview($("qr_url").value.trim()));
 $("reset-button").addEventListener("click",resetForm);
 const params = new URLSearchParams(window.location.search);
