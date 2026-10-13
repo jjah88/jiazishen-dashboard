@@ -303,7 +303,16 @@ async function publishBlobToPublic(blob,fileName){
   const cleanName=String(fileName||"dashboard.html").replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
   const publicPath=`public/boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${cleanName}`;
   const bytes = await blob.arrayBuffer();
-  const normalizedHtml = normalizeHtmlToUtf8(bytes);
+  // Always resolve the normalizer result before passing it to Blob.
+  // If an older/deployed copy still exposes an async normalizer, this prevents
+  // the Promise object itself from being serialized as the page body.
+  let normalizedHtml = await Promise.resolve(normalizeHtmlToUtf8(bytes));
+  if (typeof normalizedHtml !== "string") {
+    throw new Error("公开发布失败：HTML 编码处理未返回文本，请重新覆盖上传最新 admin.html 后再发布。");
+  }
+  if (normalizedHtml.trim() === "[object Promise]") {
+    throw new Error("公开发布失败：编码处理结果仍是 Promise，请检查后台是否已更新到最新版本。");
+  }
   const htmlBlob = new Blob([normalizedHtml], {type:"text/html;charset=utf-8"});
   const {data,error}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(publicPath,htmlBlob,{cacheControl:"60",upsert:false,contentType:"text/html; charset=utf-8"});
   if(error){
