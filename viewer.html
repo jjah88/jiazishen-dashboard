@@ -22,10 +22,7 @@ async function tryLoadMemberHtml(id){
  const {data:{session},error:sessionError}=await db.auth.getSession();if(sessionError)throw sessionError;
  if(!session?.user)return {loggedIn:false,active:false};
  const {data:access,error}=await db.functions.invoke("get-private-dashboard",{body:{demo_id:id}});
- if(!error&&typeof access?.html==="string"){
-  const blob=new Blob([access.html],{type:"text/html;charset=utf-8"});
-  return {loggedIn:true,active:true,url:URL.createObjectURL(blob)};
- }
+ if(!error&&access?.signed_url)return {loggedIn:true,active:true,url:access.signed_url};
  let reason=access?.error||"当前账号尚未开通有效会员。请先完成注册/登录，再联系甲子申核实并开通会员。";
  if(error&&error.context&&typeof error.context.json==="function"){try{const payload=await error.context.json();reason=payload.error||reason;}catch{}}
  return {loggedIn:true,active:false,reason};
