@@ -13,7 +13,11 @@ function showMessage(title,body,actions="",qrUrl="",status=""){
 }
 function setGate(d,id,loggedIn,reason=""){
  const gate=document.getElementById("gate");
- const pct=Math.max(20,Math.min(70,Number(d.preview_percent)||45));gate.dataset.previewPercent=String(pct);gate.style.display="flex";
+ const pct=Math.max(20,Math.min(70,Number(d.preview_percent)||45));gate.dataset.previewPercent=String(pct);
+ // Put the gate after the clipped preview in normal document flow; it must not float over a scrollable full-height iframe.
+ const wrap=document.querySelector(".frame-wrap");
+ wrap.style.height="auto";wrap.style.minHeight="0";wrap.style.overflow="hidden";
+ gate.style.position="relative";gate.style.top="auto";gate.style.right="auto";gate.style.bottom="auto";gate.style.left="auto";gate.style.width="100%";gate.style.display="flex";
  document.getElementById("gate-title").textContent=loggedIn?"会员开通后查看完整研究内容":"登录并开通会员，查看完整研究内容";
  document.getElementById("gate-copy").textContent=reason||d.consult_text||"当前为公开预览。注册/登录后，开通甲子申会员即可查看完整产业研究内容。";
  const ret="viewer.html?id="+encodeURIComponent(id);
@@ -71,6 +75,24 @@ async function tryLoadMemberHtml(id){
   }else{
     throw new Error("该看板尚未生成真实内容预览。请管理员在后台编辑并保存一次；无需重新上传 HTML。");
   }
+  frame.setAttribute("scrolling","no");
+  frame.style.overflow="hidden";
+  frame.style.display="block";
+  // Disable the iframe's own scrollbar and physically clip its viewport to the configured percentage.
+  // The gate is placed after the iframe, so page scrolling cannot reveal the obscured remainder.
+  frame.onload=()=>{
+    try{
+      const doc=frame.contentDocument;
+      const fullHeight=Math.max(doc.documentElement.scrollHeight,doc.body?.scrollHeight||0,doc.documentElement.offsetHeight||0);
+      const pct=Math.max(20,Math.min(70,Number(d.preview_percent)||45));
+      const clipHeight=Math.max(220,Math.ceil(fullHeight*pct/100));
+      frame.style.height=clipHeight+"px";
+      frame.style.maxHeight=clipHeight+"px";
+      frame.style.overflow="hidden";
+      if(doc.documentElement)doc.documentElement.style.overflow="hidden";
+      if(doc.body)doc.body.style.overflow="hidden";
+    }catch(err){console.warn("无法测量预览内容高度，使用安全默认高度",err);frame.style.height="45vh";}
+  };
   frame.srcdoc=previewHtml;
   setGate(d,id,access.loggedIn,access.reason||"");
   status.textContent=d.name+(access.loggedIn?" · 预览模式（当前账号尚未开通会员）":" · 游客预览模式");

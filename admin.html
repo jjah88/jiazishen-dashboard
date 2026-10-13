@@ -275,7 +275,10 @@ function publicObjectPathFromUrl(url){
 async function publishBlobToPublic(blob,fileName){
   const cleanName=String(fileName||"dashboard.html").replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
   const publicPath=`public/boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${cleanName}`;
-  const {data,error}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(publicPath,blob,{cacheControl:"60",upsert:false,contentType:"text/html;charset=utf-8"});
+  // Supabase Storage may preserve a downloaded object's old text/plain MIME type.
+  // Re-wrap the bytes as text/html so both Blob.type and upload metadata agree.
+  const htmlBlob = new Blob([await blob.arrayBuffer()], {type:"text/html"});
+  const {data,error}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(publicPath,htmlBlob,{cacheControl:"60",upsert:false,contentType:"text/html"});
   if(error){
     const detail=[error.message,error.error,error.statusCode,error.name].filter(Boolean).join(" | ");
     throw new Error("上传到公开存储桶失败"+(error.statusCode?"（HTTP "+error.statusCode+"）":"")+"："+(detail||"未知存储错误")+"。请检查 dashboard-previews 桶的文件大小限制及管理员上传策略。原始错误："+JSON.stringify({statusCode:error.statusCode,error:error.error,message:error.message}));
@@ -308,7 +311,8 @@ async function uploadPrivateDashboard(file){
   try{
     const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
     const path=`boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${safeName}`;
-    const privateResult=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,file,{cacheControl:"0",upsert:false,contentType:"text/html;charset=utf-8"});
+    const htmlFileBlob = new Blob([await file.arrayBuffer()], {type:"text/html"});
+    const privateResult=await db.storage.from(PRIVATE_DASHBOARD_BUCKET).upload(path,htmlFileBlob,{cacheControl:"0",upsert:false,contentType:"text/html"});
     if(privateResult.error)throw privateResult.error;
     $("private_path").value=privateResult.data.path;
     $("page_url").value="";
