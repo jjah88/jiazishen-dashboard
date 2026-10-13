@@ -18,6 +18,13 @@ function setGate(d,id,loggedIn,reason=""){
  document.getElementById("gate-actions").innerHTML=`<a href="member.html?return=${encodeURIComponent(ret)}">登录 / 注册 / 会员状态</a><a class="secondary" href="./">返回看板中心</a>`;
  if(d.qr_url)document.getElementById("qr-area").innerHTML='<img class="qr" alt="甲子申咨询二维码" src="'+safe(d.qr_url)+'">';
 }
+
+function buildVisitorPreview(d){
+ const title=safe(d.name||"产业研究看板");
+ const description=safe(d.description||"本看板围绕目标市场、产业动态、政策法规、市场准入与重点企业进行系统梳理。");
+ return `<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}｜游客预览</title><style>*{box-sizing:border-box}body{margin:0;background:#f4f6f8;color:#263849;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.8}.wrap{max-width:1000px;margin:auto;padding:30px 22px 50px}.brand{font-size:12px;letter-spacing:2px;color:#6a8194;font-weight:700}.hero{margin-top:16px;padding:34px;background:#12304b;color:#fff;border-radius:12px}.eyebrow{font-size:11px;letter-spacing:2px;color:#c8d6e2}.hero h1{font-size:clamp(25px,4vw,38px);line-height:1.35;margin:12px 0}.hero p{color:#e0e8ef;margin:0}.tag{display:inline-block;margin-top:18px;border:1px solid #91a8bb;border-radius:20px;padding:3px 11px;font-size:12px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:16px}.card{background:white;border:1px solid #dfe6ec;border-radius:10px;padding:20px}.card h2{font-size:16px;color:#183c59;margin:0 0 8px}.card p{font-size:13px;color:#657787;margin:0}.note{margin-top:16px;padding:16px 18px;background:#eaf0f5;border-left:3px solid #829db3;border-radius:5px;font-size:13px;color:#40596d}.foot{font-size:12px;color:#8493a0;margin-top:20px}@media(max-width:600px){.wrap{padding:18px 12px}.hero{padding:24px 20px}.grid{grid-template-columns:1fr}}</style></head><body><div class="wrap"><div class="brand">甲子申｜出海决策产业情报</div><section class="hero"><div class="eyebrow">RESEARCH DASHBOARD · PREVIEW</div><h1>${title}</h1><p>${description}</p><span class="tag">游客预览版</span></section><div class="grid"><section class="card"><h2>市场与产业动态</h2><p>梳理目标市场规模、产业发展阶段、需求变化与近期重点动态。</p></section><section class="card"><h2>政策法规与市场准入</h2><p>关注相关政策、准入规则、认证要求及落地注意事项。</p></section><section class="card"><h2>重点项目与企业资源</h2><p>建立重点项目、主要参与企业及产业链资源的观察框架。</p></section><section class="card"><h2>持续更新与研究判断</h2><p>围绕关键变化持续跟踪，帮助读者理解市场机会与潜在风险。</p></section></div><div class="note">当前为公开预览。详细市场数据、完整分析、项目资料与企业名录仅向通过验证的有效会员开放。</div><div class="foot">甲子申 · 中国企业出海决策情报</div></div></body></html>`;
+}
+
 async function tryLoadMemberHtml(id){
  const {data:{session},error:sessionError}=await db.auth.getSession();if(sessionError)throw sessionError;
  if(!session?.user)return {loggedIn:false,active:false};
@@ -31,7 +38,7 @@ async function tryLoadMemberHtml(id){
  const status=document.getElementById("status");
  try{
   const id=new URLSearchParams(location.search).get("id");if(!id)throw new Error("缺少看板编号。");
-  const {data:d,error}=await db.from("demos").select("id,name,description,page_url,private_path,access_mode,preview_url,qr_url,consult_text,preview_percent,is_published").eq("id",id).eq("is_published",true).maybeSingle();
+  const {data:d,error}=await db.from("demos").select("id,name,description,page_url,private_path,access_mode,qr_url,consult_text,preview_percent,is_published").eq("id",id).eq("is_published",true).maybeSingle();
   if(error)throw error;if(!d)throw new Error("该看板不存在或尚未发布。");
   document.title=d.name+"｜甲子申";
   const semi=d.access_mode!=="public";
@@ -39,7 +46,6 @@ async function tryLoadMemberHtml(id){
   const frame=document.getElementById("board-frame");
   if(!semi){if(!d.page_url)throw new Error("该公开看板尚未配置网址。");frame.src=d.page_url;document.getElementById("gate").style.display="none";return;}
   if(!d.private_path)throw new Error("该半公开看板尚未上传完整 HTML 文件，请联系管理员。");
-  if(!d.preview_url)throw new Error("该半公开看板尚未配置游客预览版 HTML，请联系管理员。");
   // Visitors always see the public preview. Only a server-validated active member receives a signed URL for the private full HTML.
   const access=await tryLoadMemberHtml(id);
   if(access.active){
@@ -48,7 +54,9 @@ async function tryLoadMemberHtml(id){
     status.textContent=d.name+" · 会员权限已验证，正在加载完整内容";
     return;
   }
-  frame.src=d.preview_url;
+  // Build the visitor preview inside this page instead of loading an old/public HTML URL.
+  // This avoids stale links, wrong MIME types, and source-code/encoding displays.
+  frame.srcdoc=buildVisitorPreview(d);
   setGate(d,id,access.loggedIn,access.reason||"");
   status.textContent=d.name+(access.loggedIn?" · 预览模式（当前账号尚未开通会员）":" · 游客预览模式");
  }catch(e){console.error(e);document.getElementById("main").innerHTML='<div class="error">'+safe(e.message||"看板暂时无法打开")+'<br><a href="./">返回甲子申首页</a></div>';status.textContent="看板暂时无法打开";}
