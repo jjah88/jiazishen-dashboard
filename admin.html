@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta name="jiazishen-admin-build" content="single-upload-switch-fix-20261013">
+<meta name="jiazishen-admin-build" content="public-html-utf8-normalize-20261013">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理后台｜甲子申产业出海看板</title>
@@ -272,12 +272,39 @@ function publicObjectPathFromUrl(url){
     return (p.startsWith("public/boards/")||p.startsWith("boards/"))?p:null;
   }catch{return null;}
 }
+async function normalizeHtmlToUtf8(bytes){
+  const raw = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+  // Read the ASCII-compatible head first so we can honor a legacy charset declaration.
+  const headProbe = new TextDecoder("windows-1252").decode(raw.slice(0, 8192));
+  const charsetMatch = headProbe.match(/<meta[^>]+charset\s*=\s*["']?\s*([\w.-]+)/i)
+    || headProbe.match(/<meta[^>]+content\s*=\s*["'][^"']*charset\s*=\s*([\w.-]+)/i);
+  const declared = (charsetMatch?.[1] || "").toLowerCase();
+  let html = "";
+  // Keep valid UTF-8 unchanged. If the file is legacy Chinese encoding, decode it before
+  // re-encoding; this avoids browsers interpreting GBK bytes as UTF-8 and showing mojibake.
+  try {
+    html = new TextDecoder("utf-8", {fatal:true}).decode(raw);
+  } catch (_) {
+    let label = /^(gb2312|gbk|gb18030|big5|windows-1252|iso-8859-1)$/.test(declared) ? declared : "gb18030";
+    try { html = new TextDecoder(label).decode(raw); }
+    catch (_) { html = new TextDecoder("gb18030").decode(raw); }
+  }
+  // Normalize any existing charset declarations, without DOM serialization (which could
+  // damage dashboard scripts, chart markup, or layout), and explicitly declare UTF-8.
+  html = html.replace(/<meta\b([^>]*\bcharset\s*=\s*["']?)[\w.-]+([^>]*)>/ig, '<meta$1utf-8$2>');
+  html = html.replace(/(<meta\b[^>]*http-equiv\s*=\s*["']?content-type["']?[^>]*content\s*=\s*["'][^"']*charset\s*=\s*)[\w.-]+/ig, '$1utf-8');
+  if (!/<meta\b[^>]*\bcharset\s*=/i.test(html)) {
+    if (/<head\b[^>]*>/i.test(html)) html = html.replace(/<head\b[^>]*>/i, m => m + '\n<meta charset="utf-8">');
+    else html = '<meta charset="utf-8">\n' + html;
+  }
+  return html;
+}
 async function publishBlobToPublic(blob,fileName){
   const cleanName=String(fileName||"dashboard.html").replace(/[^a-zA-Z0-9._-]/g,"-").slice(-100)||"dashboard.html";
   const publicPath=`public/boards/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${cleanName}`;
-  // Supabase Storage may preserve a downloaded object's old text/plain MIME type.
-  // Re-wrap the bytes as text/html so both Blob.type and upload metadata agree.
-  const htmlBlob = new Blob([await blob.arrayBuffer()], {type:"text/html"});
+  const bytes = await blob.arrayBuffer();
+  const normalizedHtml = normalizeHtmlToUtf8(bytes);
+  const htmlBlob = new Blob([normalizedHtml], {type:"text/html;charset=utf-8"});
   const {data,error}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(publicPath,htmlBlob,{cacheControl:"60",upsert:false,contentType:"text/html"});
   if(error){
     const detail=[error.message,error.error,error.statusCode,error.name].filter(Boolean).join(" | ");
@@ -511,16 +538,12 @@ async function saveRecord(event){
       const previousPublicPath=publicObjectPathFromUrl(previousPageUrl);
       if(!r.private_path)throw new Error("请先点击唯一的“上传看板 HTML”按钮上传一次完整 HTML。");
       if(r.access_mode==="public"){
-        if(oldRecord?.access_mode==="public" && oldRecord.private_path===r.private_path && previousPageUrl && previousPublicPath){
-          // Keep the existing public copy when only metadata changed.
-          r.page_url=previousPageUrl;
-        }else{
-          // First publication, semi->public, or replacing the source HTML: publish from private master.
-          r.page_url=await publishPrivateMaster(r.private_path);
-          if(previousPublicPath && previousPageUrl!==r.page_url){
-            const {error:removeOldError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPublicPath]);
-            if(removeOldError)throw new Error("新公开副本已生成，但旧公开副本未能撤下。请先检查 dashboard-previews 删除权限，避免旧版本继续公开。错误："+removeOldError.message);
-          }
+        // Always rebuild the public copy from the private master on save. This also repairs
+        // already-published pages that were uploaded with a legacy/incorrect charset.
+        r.page_url=await publishPrivateMaster(r.private_path);
+        if(previousPublicPath && previousPageUrl!==r.page_url){
+          const {error:removeOldError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPublicPath]);
+          if(removeOldError)throw new Error("新公开副本已生成，但旧公开副本未能撤下。请先检查 dashboard-previews 删除权限，避免旧版本继续公开。错误："+removeOldError.message);
         }
         r.preview_url=null;
       }else{
