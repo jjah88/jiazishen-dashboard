@@ -518,12 +518,22 @@ async function saveRecord(event){
         }
         r.preview_url=null;
       }else{
-        // Ensure a real, source-derived preview exists before removing a former public full copy.
-        if(!r.preview_url){r.preview_url=await publishPreviewFromPrivateMaster(r.private_path);}
+        // Repair preview on every save from the private master. This fixes old records whose
+        // preview_url is empty/stale and avoids trusting an old preview object.
+        const previousPreviewPath=publicObjectPathFromUrl(oldRecord?.preview_url||r.preview_url||"");
+        r.preview_url=await publishPreviewFromPrivateMaster(r.private_path);
+        // Only remove the old preview after the new preview has been uploaded successfully.
+        if(previousPreviewPath){
+          const nextPreviewPath=publicObjectPathFromUrl(r.preview_url);
+          if(nextPreviewPath && nextPreviewPath!==previousPreviewPath){
+            const {error:previewRemoveError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPreviewPath]);
+            if(previewRemoveError)console.warn("新预览已生成，但旧预览清理失败：",previewRemoveError.message);
+          }
+        }
         // Remove any system-managed public full copy only after preview generation succeeded.
         if(previousPublicPath){
           const {error:removeError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPublicPath]);
-          if(removeError)throw new Error("无法撤下公开副本，已取消切换，避免完整版继续公开。请在 Supabase 执行修复包内 SQL 并确认管理员权限。错误："+removeError.message);
+          if(removeError)throw new Error("游客预览已生成，但无法撤下公开完整版，已取消保存以避免完整版继续公开。请在 Supabase 执行修复包内 SQL 并确认管理员权限。错误："+removeError.message);
         }
         r.page_url=null;
       }
