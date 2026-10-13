@@ -272,7 +272,7 @@ function publicObjectPathFromUrl(url){
     return (p.startsWith("public/boards/")||p.startsWith("boards/"))?p:null;
   }catch{return null;}
 }
-async function normalizeHtmlToUtf8(bytes){
+function normalizeHtmlToUtf8(bytes){
   const raw = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
   // Read the ASCII-compatible head first so we can honor a legacy charset declaration.
   const headProbe = new TextDecoder("windows-1252").decode(raw.slice(0, 8192));
@@ -305,7 +305,7 @@ async function publishBlobToPublic(blob,fileName){
   const bytes = await blob.arrayBuffer();
   const normalizedHtml = normalizeHtmlToUtf8(bytes);
   const htmlBlob = new Blob([normalizedHtml], {type:"text/html;charset=utf-8"});
-  const {data,error}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(publicPath,htmlBlob,{cacheControl:"60",upsert:false,contentType:"text/html"});
+  const {data,error}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).upload(publicPath,htmlBlob,{cacheControl:"60",upsert:false,contentType:"text/html; charset=utf-8"});
   if(error){
     const detail=[error.message,error.error,error.statusCode,error.name].filter(Boolean).join(" | ");
     throw new Error("上传到公开存储桶失败"+(error.statusCode?"（HTTP "+error.statusCode+"）":"")+"："+(detail||"未知存储错误")+"。请检查 dashboard-previews 桶的文件大小限制及管理员上传策略。原始错误："+JSON.stringify({statusCode:error.statusCode,error:error.error,message:error.message}));
