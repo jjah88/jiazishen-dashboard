@@ -50,7 +50,42 @@ async function tryLoadMemberHtml(id){
   const semi=d.access_mode!=="public";
   status.textContent=d.name+(semi?" · 公开预览 / 会员完整访问":" · 完整公开看板");
   const frame=document.getElementById("board-frame");
-  if(!semi){if(!d.page_url)throw new Error("该公开看板尚未配置网址。");frame.src=d.page_url;document.getElementById("gate").style.display="none";return;}
+if (!semi) {
+  if (!d.page_url) {
+    throw new Error("该公开看板尚未配置网址。");
+  }
+
+  // 先把 Supabase 返回的内容作为文本读取，
+  // 再交给 iframe 按 HTML 页面渲染，绕开 text/plain 响应类型。
+  const response = await fetch(d.page_url, {
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      "公开看板加载失败（HTTP " + response.status + "）。"
+    );
+  }
+
+  const html = await response.text();
+
+  if (
+    !/<!doctype\s+html/i.test(html) &&
+    !/<html[\s>]/i.test(html)
+  ) {
+    throw new Error(
+      "公开文件内容不是有效的 HTML 页面，请检查原始文件。"
+    );
+  }
+
+  frame.setAttribute("sandbox", "allow-scripts");
+  frame.removeAttribute("src");
+  frame.srcdoc = html;
+
+  document.getElementById("gate").style.display = "none";
+  status.textContent = d.name + " · 完整公开看板";
+  return;
+}  
   if(!d.private_path)throw new Error("该半公开看板尚未上传完整 HTML 文件，请联系管理员。");
   // Visitors always see the public preview. Only a server-validated active member receives a signed URL for the private full HTML.
   const access=await tryLoadMemberHtml(id);
