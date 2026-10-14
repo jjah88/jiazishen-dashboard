@@ -57,9 +57,9 @@ if (!semi) {
 
   // 先把 Supabase 返回的内容作为文本读取，
   // 再交给 iframe 按 HTML 页面渲染，绕开 text/plain 响应类型。
-  const response = await fetch(d.page_url, {
-    cache: "no-store"
-  });
+const response = await fetch(d.page_url, {
+    cache: "force-cache"
+});
 
   if (!response.ok) {
     throw new Error(
