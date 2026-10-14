@@ -14,6 +14,7 @@ function showMessage(title,body,actions="",qrUrl="",status=""){
 function setGate(d,id,loggedIn,reason=""){
  const gate=document.getElementById("gate");
  const pct=Math.max(20,Math.min(70,Number(d.preview_percent)||45));gate.dataset.previewPercent=String(pct);
+ // Put the gate after the clipped preview in normal document flow; it must not float over a scrollable full-height iframe.
  const wrap=document.querySelector(".frame-wrap");
  wrap.style.height="auto";wrap.style.minHeight="0";wrap.style.overflow="hidden";
  gate.style.position="relative";gate.style.top="auto";gate.style.right="auto";gate.style.bottom="auto";gate.style.left="auto";gate.style.width="100%";gate.style.display="flex";
@@ -43,38 +44,48 @@ async function tryLoadMemberHtml(id){
  const status=document.getElementById("status");
  try{
   const id=new URLSearchParams(location.search).get("id");if(!id)throw new Error("缺少看板编号。");
-
-  // 先从 sessionStorage 读首页缓存，省掉一次数据库往返
-  let d=null;
-  try{
-    const cached=sessionStorage.getItem("jzs-demo-"+id);
-    if(cached) d=JSON.parse(cached);
-  }catch(e){}
-  if(!d || d.is_published===false || d.is_published===undefined){
-    const {data:dData,error}=await db.from("demos").select("id,name,description,page_url,private_path,access_mode,preview_url,qr_url,consult_text,preview_percent,is_published").eq("id",id).eq("is_published",true).maybeSingle();
-    if(error)throw error;if(!dData)throw new Error("该看板不存在或尚未发布。");
-    d=dData;
-  }
-
+  const {data:d,error}=await db.from("demos").select("id,name,description,page_url,private_path,access_mode,preview_url,qr_url,consult_text,preview_percent,is_published").eq("id",id).eq("is_published",true).maybeSingle();
+  if(error)throw error;if(!d)throw new Error("该看板不存在或尚未发布。");
   document.title=d.name+"｜甲子申";
   const semi=d.access_mode!=="public";
   status.textContent=d.name+(semi?" · 公开预览 / 会员完整访问":" · 完整公开看板");
   const frame=document.getElementById("board-frame");
-
-  if (!semi) {
-    if (!d.page_url) {
-      throw new Error("该公开看板尚未配置网址。");
-    }
-    // 直接让 iframe 加载公开 HTML：浏览器走正常页面加载流程（HTTP/2、预加载、缓存都能用），
-    // 比 fetch + srcdoc 快很多。admin.html 上传时已写入 Content-Type: text/html。
-    frame.removeAttribute("sandbox");
-    frame.removeAttribute("srcdoc");
-    frame.src = d.page_url;
-    document.getElementById("gate").style.display = "none";
-    status.textContent = d.name + " · 完整公开看板";
-    return;
+if (!semi) {
+  if (!d.page_url) {
+    throw new Error("该公开看板尚未配置网址。");
   }
 
+  // 先把 Supabase 返回的内容作为文本读取，
+  // 再交给 iframe 按 HTML 页面渲染，绕开 text/plain 响应类型。
+  const response = await fetch(d.page_url, {
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      "公开看板加载失败（HTTP " + response.status + "）。"
+    );
+  }
+
+  const html = await response.text();
+
+  if (
+    !/<!doctype\s+html/i.test(html) &&
+    !/<html[\s>]/i.test(html)
+  ) {
+    throw new Error(
+      "公开文件内容不是有效的 HTML 页面，请检查原始文件。"
+    );
+  }
+
+  frame.setAttribute("sandbox", "allow-scripts");
+  frame.removeAttribute("src");
+  frame.srcdoc = html;
+
+  document.getElementById("gate").style.display = "none";
+  status.textContent = d.name + " · 完整公开看板";
+  return;
+}  
   if(!d.private_path)throw new Error("该半公开看板尚未上传完整 HTML 文件，请联系管理员。");
   // Visitors always see the public preview. Only a server-validated active member receives a signed URL for the private full HTML.
   const access=await tryLoadMemberHtml(id);
@@ -84,15 +95,15 @@ async function tryLoadMemberHtml(id){
     status.textContent=d.name+" · 会员权限已验证，正在加载完整内容";
     return;
   }
-  // Fetch the sanitized, source-derived excerpt and render it as srcdoc.
+  // Fetch the sanitized, source-derived excerpt and render it as srcdoc. This avoids navigating
+  // directly to the Storage object (whose CSP may block inline CSS) while showing the real board header.
   const preview=document.getElementById("visitor-preview");
   preview.style.display="none";
   frame.style.display="block";
   frame.setAttribute("sandbox","allow-same-origin");
   let previewHtml="";
   if(d.preview_url){
-    // 预览文件也允许浏览器缓存（每次保存会生成新路径，旧路径会被清理，不会串版本）
-    const response=await fetch(d.preview_url,{cache:"force-cache"});
+    const response=await fetch(d.preview_url,{cache:"no-store"});
     if(!response.ok)throw new Error("游客预览加载失败（HTTP "+response.status+"）。请管理员在后台编辑并保存一次该看板，以重新生成预览；无需重新上传完整版。");
     previewHtml=await response.text();
     if(!/<!doctype html|<html[\s>]/i.test(previewHtml))throw new Error("游客预览文件格式异常，请管理员在后台编辑并保存一次该看板以重新生成预览。");
@@ -102,6 +113,8 @@ async function tryLoadMemberHtml(id){
   frame.setAttribute("scrolling","no");
   frame.style.overflow="hidden";
   frame.style.display="block";
+  // Disable the iframe's own scrollbar and physically clip its viewport to the configured percentage.
+  // The gate is placed after the iframe, so page scrolling cannot reveal the obscured remainder.
   frame.onload=()=>{
     try{
       const doc=frame.contentDocument;

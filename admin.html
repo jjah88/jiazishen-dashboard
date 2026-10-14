@@ -42,6 +42,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:650px){main{padding:0 12px 30px}.top{padding:20px 14px}.row{grid-template-columns:1fr}.panel{padding:16px}.item{align-items:flex-start;flex-direction:column}.item-actions{width:100%}}
 #page_url{display:none!important}
 
+/* 富文本编辑器 */
 .rich-wrap{border:1px solid #d7dfe8;border-radius:6px;background:#fff;overflow:hidden}
 .rich-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px;background:#f7f9fb;border-bottom:1px solid #e6ebf0}
 .rich-toolbar button{padding:6px 9px;border:1px solid transparent;background:transparent;color:#3a4d63;border-radius:4px;font-size:13px;line-height:1;cursor:pointer;min-width:30px}
@@ -408,9 +409,7 @@ async function publishBlobToPublic(blob, fileName) {
   if (!/<html[\s>]/i.test(normalizedHtml) && !/<!doctype\s+html/i.test(normalizedHtml)) throw new Error("公开发布失败：生成的文件不是有效的 HTML 页面。");
   const htmlBlob = new Blob([normalizedHtml], {type: "text/html;charset=utf-8"});
   const storage = db.storage.from(PUBLIC_DASHBOARD_BUCKET);
-  // 关键改动：cacheControl 从 "0" 改为 1 年，让浏览器可以长期缓存公开 HTML。
-  // 每次保存都会生成新路径，旧路径会被清理，不会出现版本串。
-  const { data, error } = await storage.upload(publicPath, htmlBlob, {cacheControl:"31536000",upsert:false,contentType:"text/html; charset=utf-8"});
+  const { data, error } = await storage.upload(publicPath, htmlBlob, {cacheControl:"0",upsert:false,contentType:"text/html; charset=utf-8"});
   if (error) throw new Error("公开 HTML 上传失败：" + (error.message || JSON.stringify(error)));
   const { data: checkBlob, error: checkError } = await storage.download(data.path);
   if (checkError || !checkBlob) { await storage.remove([data.path]); throw new Error("公开文件已上传，但回读校验失败：" + (checkError?.message || "未读取到文件")); }
@@ -713,6 +712,7 @@ async function saveRecord(event){
       r.source_name=$("news_source_name").value.trim()||null;
       const editorEl=$("news_content_editor");
       const rawHtml = editorEl ? editorEl.innerHTML.trim() : "";
+      // 只把空编辑器中的占位视为空
       const cleanedHtml = rawHtml.replace(/^(<br\s*\/?>|\s|&nbsp;)*$/i,"");
       r.content = cleanedHtml ? rawHtml : null;
       const pubAt=$("news_published_at").value;
@@ -873,6 +873,7 @@ $("member-revoke-button").addEventListener("click",()=>{if(confirm("确定撤销
 const richEditor=$("news_content_editor");
 const richToolbar=$("rich-toolbar");
 if(richToolbar && richEditor){
+  // 阻止 toolbar 内元素夺走编辑器焦点（除下拉/颜色选择外）
   richToolbar.addEventListener("mousedown",e=>{
     const t=e.target;
     if(t.tagName==="SELECT"||t.tagName==="OPTION"||t.tagName==="INPUT") return;
@@ -924,6 +925,7 @@ if(richToolbar && richEditor){
     try{document.execCommand("formatBlock",false,"P");}catch(e){}
     richEditor.focus();
   });
+  // 粘贴时转为纯文本，避免把外部样式/脚本带进来
   richEditor.addEventListener("paste",e=>{
     e.preventDefault();
     const text=(e.clipboardData||window.clipboardData).getData("text/plain");
