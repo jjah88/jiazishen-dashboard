@@ -414,7 +414,6 @@ async function publishBlobToPublic(blob, fileName) {
   const { data: checkBlob, error: checkError } = await storage.download(data.path);
   if (checkError || !checkBlob) { await storage.remove([data.path]); throw new Error("公开文件已上传，但回读校验失败：" + (checkError?.message || "未读取到文件")); }
   const returnedType = String(checkBlob.type || "").split(";")[0].trim().toLowerCase();
-  const returnedType = String(checkBlob.type || "").split(";")[0].trim().toLowerCase();
 
 // Supabase Storage 下载 HTML 时可能返回 text/plain，不能仅依赖 Content-Type。
 // 只验证实际内容是否仍然是 HTML。
