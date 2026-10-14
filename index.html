@@ -231,7 +231,11 @@ return `<button type="button" class="item-card is-link category-trigger" data-ca
 function render(id,rows,mapper,countId){document.getElementById(id).innerHTML=rows.length?rows.map(mapper).join(""):`<div class="empty">暂无已发布内容，后续将在这里更新。</div>`;if(countId)document.getElementById(countId).textContent=`${rows.length} 项内容`;}
 const pageSize=9;let allDashboards=[],filteredDashboards=[],visibleCount=pageSize,allCountries=[],allIndustries=[],activeView="demos";
 let allNews=[],allNewsCategories=[],newsVisibleCount=6,activeNewsCat="";
-function viewerUrl(d){return `viewer.html?id=${encodeURIComponent(d.id)}`;}
+function viewerUrl(d){
+  // 点击瞬间把这条看板数据缓存到 sessionStorage，viewer.html 可直接读取，省掉一次数据库往返。
+  try{ sessionStorage.setItem("jzs-demo-"+d.id, JSON.stringify(d)); }catch(e){}
+  return `viewer.html?id=${encodeURIComponent(d.id)}`;
+}
 function setOptions(id,items,labelFn,valueFn){const el=document.getElementById(id);const first=el.options[0];el.innerHTML="";el.appendChild(first);items.forEach(item=>{const o=document.createElement("option");o.value=valueFn(item);o.textContent=labelFn(item);el.appendChild(o);});}
 function dashboardTags(d){const out=[];const c=allCountries.find(x=>x.id===d.country_id);const i=allIndustries.find(x=>x.id===d.industry_id);if(c?.name)out.push(c.name);if(i?.name)out.push(i.name);(Array.isArray(d.tags)?d.tags:[]).forEach(t=>{if(t&&!out.includes(t))out.push(t)});return out;}
 
