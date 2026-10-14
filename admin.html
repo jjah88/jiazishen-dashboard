@@ -755,30 +755,58 @@ $("login-form").addEventListener("submit",async e=>{
   await enterAdmin(data.user);
 });
 
+
 async function enterAdmin(user){
   $("login-panel").classList.add("hidden");
   $("admin-panel").classList.add("hidden");
   $("denied-panel").classList.add("hidden");
-  try{
-    const {data:admin,error:adminError}=await db.rpc("is_admin");
-    if(adminError)throw adminError;
-    if(admin!==true){
-      $("denied-panel").classList.remove("hidden");
-      return;
-    }
-    $("admin-panel").classList.remove("hidden");
-    $("whoami").textContent="已登录："+user.email;
-    setStatus("admin-status","管理员验证成功，正在加载管理数据……");
-    const {error}=await db.from("countries").select("id").limit(1);
-    if(error)throw error;
-    await refreshData();
-    setStatus("admin-status","管理员验证成功。可以开始管理内容。");
-  }catch(e){
-    $("admin-panel").classList.add("hidden");
+
+  // 第一步：单独验证管理员身份
+  let admin;
+  try {
+    const result = await db.rpc("is_admin");
+    if (result.error) throw result.error;
+    admin = result.data;
+  } catch (e) {
     $("denied-panel").classList.remove("hidden");
-    const p=$("denied-panel").querySelector("p");
-    if(p)p.textContent="暂时无法验证管理员权限。请确认管理员配置后重试；普通会员不能访问管理功能。";
-    console.error("Admin authorization check failed:",e);
+    const p = $("denied-panel").querySelector("p");
+    if (p) {
+      p.textContent = "管理员身份验证请求失败：" +
+        (e.message || String(e));
+    }
+    console.error("Admin authorization request failed:", e);
+    return;
+  }
+
+  if (admin !== true) {
+    $("denied-panel").classList.remove("hidden");
+    const p = $("denied-panel").querySelector("p");
+    if (p) p.textContent =
+      "管理员身份验证未通过。请检查登录账号及管理员配置。";
+    console.error("is_admin returned:", admin);
+    return;
+  }
+
+  // 第二步：身份已验证，显示后台
+  $("admin-panel").classList.remove("hidden");
+  $("whoami").textContent = "已登录：" + (user?.email || "");
+  setStatus("admin-status", "管理员验证成功，正在加载管理数据……");
+
+  // 第三步：单独处理数据加载错误，不再误报为无权访问
+  try {
+    const { error } = await db.from("countries").select("id").limit(1);
+    if (error) throw error;
+
+    await refreshData();
+    setStatus("admin-status", "管理员验证成功。可以开始管理内容。");
+  } catch (e) {
+    setStatus(
+      "admin-status",
+      "管理员身份验证成功，但管理数据加载失败：" +
+      (e.message || String(e)) +
+      "\n请检查 Network 中失败的数据请求及其 Response。"
+    );
+    console.error("Admin data loading failed:", e);
   }
 }
 
