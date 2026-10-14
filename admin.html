@@ -41,6 +41,26 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .cat-swatch{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:middle;border:1px solid rgba(0,0,0,.08)}
 @media(max-width:650px){main{padding:0 12px 30px}.top{padding:20px 14px}.row{grid-template-columns:1fr}.panel{padding:16px}.item{align-items:flex-start;flex-direction:column}.item-actions{width:100%}}
 #page_url{display:none!important}
+
+/* 富文本编辑器 */
+.rich-wrap{border:1px solid #d7dfe8;border-radius:6px;background:#fff;overflow:hidden}
+.rich-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px;background:#f7f9fb;border-bottom:1px solid #e6ebf0}
+.rich-toolbar button{padding:6px 9px;border:1px solid transparent;background:transparent;color:#3a4d63;border-radius:4px;font-size:13px;line-height:1;cursor:pointer;min-width:30px}
+.rich-toolbar button:hover{background:#e8eef5;border-color:#c8d6e2}
+.rich-toolbar select{padding:5px 6px;border:1px solid #d7dfe8;border-radius:4px;font-size:12px;background:#fff;min-height:0;height:auto;width:auto;color:#3a4d63}
+.rich-toolbar input[type=color]{width:32px;height:30px;padding:0;border:1px solid #d7dfe8;background:#fff;border-radius:4px;cursor:pointer}
+.rich-sep{width:1px;height:20px;background:#dfe5eb;margin:0 4px;display:inline-block}
+.rich-editor{min-height:240px;max-height:520px;overflow-y:auto;padding:16px 18px;font-size:14px;line-height:1.85;color:var(--ink);outline:0}
+.rich-editor:focus{background:#fdfcf8}
+.rich-editor:empty:before{content:attr(data-placeholder);color:#9aa8b5;pointer-events:none}
+.rich-editor h1{margin:14px 0 8px;font-size:22px;font-weight:650;line-height:1.4}
+.rich-editor h2{margin:14px 0 8px;font-size:19px;font-weight:650;line-height:1.4}
+.rich-editor h3{margin:12px 0 6px;font-size:16px;font-weight:650;line-height:1.4}
+.rich-editor p{margin:0 0 12px}
+.rich-editor ul,.rich-editor ol{margin:0 0 12px;padding-left:24px}
+.rich-editor li{margin-bottom:6px}
+.rich-editor blockquote{margin:12px 0;padding:10px 16px;border-left:3px solid #c5a46a;background:#f7f4ec;color:#4a5c6a}
+.rich-editor a{color:#244f78;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -166,9 +186,58 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <div><label for="news_source_name">来源名称（选填）</label><input id="news_source_name" maxlength="120" placeholder="例如：商务部"></div>
 <div><label for="news_source_url">来源链接（选填）</label><input id="news_source_url" type="url" placeholder="https://..."></div>
 </div>
-<label for="news_content">资讯正文（选填）</label>
-<textarea id="news_content" rows="8" maxlength="8000" placeholder="可留空，或填写正文。正文会保留换行显示在资讯详情中。"></textarea>
-<div class="notice">建议：简介字段写 1–2 句摘要，正文写更完整的内容。资讯类别从“资讯类别”标签页读取，新增类别后请回到本页重新选择。关联国家 / 产业后，首页资讯会带有相应标签。</div>
+<label>资讯正文（支持富文本编辑）</label>
+<div class="rich-wrap">
+  <div class="rich-toolbar" id="rich-toolbar">
+    <select id="rich-font" title="字体">
+      <option value="">字体</option>
+      <option value="system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif">默认</option>
+      <option value="'Songti SC', 'SimSun', serif">宋体</option>
+      <option value="'KaiTi', 'STKaiti', serif">楷体</option>
+      <option value="'Microsoft YaHei', 'PingFang SC', sans-serif">微软雅黑</option>
+      <option value="Georgia, 'Songti SC', serif">Georgia</option>
+      <option value="Arial, Helvetica, sans-serif">Arial</option>
+    </select>
+    <select id="rich-size" title="字号">
+      <option value="">字号</option>
+      <option value="1">最小</option>
+      <option value="2">小</option>
+      <option value="3">正常</option>
+      <option value="4">中</option>
+      <option value="5">大</option>
+      <option value="6">特大</option>
+      <option value="7">最大</option>
+    </select>
+    <span class="rich-sep"></span>
+    <button type="button" data-cmd="bold" title="加粗 (Ctrl+B)"><b>B</b></button>
+    <button type="button" data-cmd="italic" title="斜体 (Ctrl+I)"><i>I</i></button>
+    <button type="button" data-cmd="underline" title="下划线 (Ctrl+U)"><u>U</u></button>
+    <button type="button" data-cmd="strikeThrough" title="删除线"><s>S</s></button>
+    <span class="rich-sep"></span>
+    <input type="color" id="rich-color" value="#1b2d3c" title="字体颜色">
+    <input type="color" id="rich-hilite" value="#fff3b0" title="背景高亮">
+    <span class="rich-sep"></span>
+    <button type="button" data-cmd="formatBlock" data-value="H2" title="二级标题">H2</button>
+    <button type="button" data-cmd="formatBlock" data-value="H3" title="三级标题">H3</button>
+    <button type="button" data-cmd="formatBlock" data-value="P" title="正文">P</button>
+    <button type="button" data-cmd="formatBlock" data-value="BLOCKQUOTE" title="引用">❝</button>
+    <span class="rich-sep"></span>
+    <button type="button" data-cmd="insertUnorderedList" title="项目符号">• 列表</button>
+    <button type="button" data-cmd="insertOrderedList" title="编号">1. 列表</button>
+    <span class="rich-sep"></span>
+    <button type="button" data-cmd="justifyLeft" title="左对齐">左</button>
+    <button type="button" data-cmd="justifyCenter" title="居中">中</button>
+    <button type="button" data-cmd="justifyRight" title="右对齐">右</button>
+    <span class="rich-sep"></span>
+    <button type="button" id="rich-link" title="插入链接">🔗</button>
+    <button type="button" id="rich-unlink" title="移除链接">✂ 链接</button>
+    <button type="button" data-cmd="insertHorizontalRule" title="分隔线">—</button>
+    <span class="rich-sep"></span>
+    <button type="button" id="rich-clear" title="清除格式">清除格式</button>
+  </div>
+  <div class="rich-editor" id="news_content_editor" contenteditable="true" data-placeholder="在此编辑资讯正文。支持字体、字号、颜色、加粗、斜体、列表、对齐、链接等。"></div>
+</div>
+<div class="notice">工具栏按钮作用于光标所在位置或选中文字。建议：简介字段写 1–2 句摘要（列表不展示摘要，详情顶部展示）；正文可写更完整的内容。资讯类别从“资讯类别”标签页读取，新增类别后请回到本页重新选择。</div>
 </div>
 
 <div id="news-cat-fields" class="hidden">
@@ -452,7 +521,7 @@ function resetForm(){
   if($("news_category"))$("news_category").value="";
   if($("news_source_name"))$("news_source_name").value="";
   if($("news_source_url"))$("news_source_url").value="";
-  if($("news_content"))$("news_content").value="";
+  if($("news_content_editor"))$("news_content_editor").innerHTML="";
   if($("news_country_id"))$("news_country_id").value="";
   if($("news_industry_id"))$("news_industry_id").value="";
   if($("news_published_at"))$("news_published_at").value=localDateTimeValue(new Date());
@@ -487,12 +556,19 @@ function showType(type){
 
 async function refreshData(){
   const names=Object.keys(configs);
-  const results=await Promise.all(names.map(type=>db.from(configs[type].table).select("*").order("sort_order")));
-  const bad=results.find(r=>r.error);
-  if(bad) throw bad.error;
+  const results=await Promise.all(names.map(async type=>{
+    try{
+      const {data,error}=await db.from(configs[type].table).select("*").order("sort_order");
+      if(error) throw error;
+      return {type,data:data||[],error:null};
+    }catch(e){
+      return {type,data:[],error:e};
+    }
+  }));
   names.forEach((type,i)=>cache[type]=results[i].data||[]);
   fillSelects();
   renderList();
+  return results.filter(r=>r.error);
 }
 
 function fillSelects(){
@@ -580,7 +656,7 @@ function editRecord(id){
     $("news_industry_id").value=r.industry_id||"";
     $("news_source_name").value=r.source_name||"";
     $("news_source_url").value=r.source_url||"";
-    $("news_content").value=r.content||"";
+    $("news_content_editor").innerHTML=r.content||"";
     if(r.published_at)$("news_published_at").value=localDateTimeValue(new Date(r.published_at));
   }
   if(currentType==="news_categories"){
@@ -634,7 +710,11 @@ async function saveRecord(event){
       r.industry_id=$("news_industry_id").value||null;
       r.source_url=$("news_source_url").value.trim()||null;
       r.source_name=$("news_source_name").value.trim()||null;
-      r.content=$("news_content").value.trim()||null;
+      const editorEl=$("news_content_editor");
+      const rawHtml = editorEl ? editorEl.innerHTML.trim() : "";
+      // 只把空编辑器中的占位视为空
+      const cleanedHtml = rawHtml.replace(/^(<br\s*\/?>|\s|&nbsp;)*$/i,"");
+      r.content = cleanedHtml ? rawHtml : null;
       const pubAt=$("news_published_at").value;
       r.published_at=pubAt?new Date(pubAt).toISOString():new Date().toISOString();
     }
@@ -789,6 +869,72 @@ $("member-search-results").addEventListener("click",e=>{const b=e.target.closest
 $("member-grant-button").addEventListener("click",()=>saveMembership(false));
 $("member-revoke-button").addEventListener("click",()=>{if(confirm("确定撤销该用户的会员权限吗？"))saveMembership(true);});
 
+/* ============ 富文本编辑器绑定 ============ */
+const richEditor=$("news_content_editor");
+const richToolbar=$("rich-toolbar");
+if(richToolbar && richEditor){
+  // 阻止 toolbar 内元素夺走编辑器焦点（除下拉/颜色选择外）
+  richToolbar.addEventListener("mousedown",e=>{
+    const t=e.target;
+    if(t.tagName==="SELECT"||t.tagName==="OPTION"||t.tagName==="INPUT") return;
+    e.preventDefault();
+  });
+  richToolbar.addEventListener("click",e=>{
+    const btn=e.target.closest("button[data-cmd]");
+    if(!btn)return;
+    const cmd=btn.dataset.cmd;
+    const val=btn.dataset.value||null;
+    try{ document.execCommand(cmd,false,val); }catch(err){ console.warn("execCommand 失败：",cmd,err); }
+    richEditor.focus();
+  });
+  $("rich-font").addEventListener("change",()=>{
+    const v=$("rich-font").value;
+    if(v){ try{document.execCommand("fontName",false,v);}catch(e){console.warn(e);} }
+    $("rich-font").value="";
+    richEditor.focus();
+  });
+  $("rich-size").addEventListener("change",()=>{
+    const v=$("rich-size").value;
+    if(v){ try{document.execCommand("fontSize",false,v);}catch(e){console.warn(e);} }
+    $("rich-size").value="";
+    richEditor.focus();
+  });
+  $("rich-color").addEventListener("input",()=>{
+    try{document.execCommand("foreColor",false,$("rich-color").value);}catch(e){console.warn(e);}
+    richEditor.focus();
+  });
+  $("rich-hilite").addEventListener("input",()=>{
+    try{document.execCommand("hiliteColor",false,$("rich-hilite").value);}catch(e){console.warn(e);}
+    richEditor.focus();
+  });
+  $("rich-link").addEventListener("click",()=>{
+    const sel=window.getSelection();
+    if(!sel || sel.isCollapsed){ alert("请先选中要加链接的文字。"); richEditor.focus(); return; }
+    const url=prompt("请输入链接地址（含 http:// 或 https://）");
+    if(url){
+      try{document.execCommand("createLink",false,url);}catch(e){console.warn(e);}
+    }
+    richEditor.focus();
+  });
+  $("rich-unlink").addEventListener("click",()=>{
+    try{document.execCommand("unlink",false,null);}catch(e){console.warn(e);}
+    richEditor.focus();
+  });
+  $("rich-clear").addEventListener("click",()=>{
+    try{document.execCommand("removeFormat",false,null);}catch(e){console.warn(e);}
+    try{document.execCommand("formatBlock",false,"P");}catch(e){}
+    richEditor.focus();
+  });
+  // 粘贴时转为纯文本，避免把外部样式/脚本带进来
+  richEditor.addEventListener("paste",e=>{
+    e.preventDefault();
+    const text=(e.clipboardData||window.clipboardData).getData("text/plain");
+    try{document.execCommand("insertText",false,text);}catch(err){
+      richEditor.textContent+=text;
+    }
+  });
+}
+
 $("login-form").addEventListener("submit",async e=>{
   e.preventDefault();setStatus("login-status","正在登录……");
   const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
@@ -827,12 +973,16 @@ async function enterAdmin(user){
   setStatus("admin-status", "管理员验证成功，正在加载管理数据……");
 
   try {
-    const { error } = await db.from("countries").select("id").limit(1);
-    if (error) throw error;
-    await refreshData();
-    setStatus("admin-status", "管理员验证成功。可以开始管理内容。");
+    const failed = await refreshData();
+    if(failed.length){
+      const msgs = failed.map(f=>`${configs[f.type].label}（${configs[f.type].table}）：${f.error.message||String(f.error)}`);
+      setStatus("admin-status","管理员验证成功，但以下数据表加载失败：\n"+msgs.join("\n")+"\n\n其余表仍可正常使用。");
+      console.warn("部分表加载失败：", failed);
+    }else{
+      setStatus("admin-status","管理员验证成功。可以开始管理内容。");
+    }
   } catch (e) {
-    setStatus("admin-status","管理员身份验证成功，但管理数据加载失败："+(e.message||String(e))+"\n请检查 Network 中失败的数据请求及其 Response。");
+    setStatus("admin-status","管理员身份验证成功，但管理数据加载异常："+(e.message||String(e)));
     console.error("Admin data loading failed:", e);
   }
 }
