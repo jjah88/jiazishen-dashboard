@@ -53,19 +53,27 @@ button.item-card{font:inherit;color:inherit;text-align:left;width:100%;appearanc
 .news-pills{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
 .news-pill{border:1px solid #d9dfda;background:#fffefa;color:#40576a;padding:7px 13px;font-size:12px;cursor:pointer;border-radius:2px}
 .news-pill.active{background:var(--navy);border-color:var(--navy);color:#fff}
+
+.news-filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:#f8f7f1;border:1px solid var(--line);margin-bottom:12px;font-size:12px;color:var(--muted)}
+.news-filter-bar select{min-height:34px;border:1px solid #d9dfda;background:#fffefa;color:var(--ink);padding:0 10px;font-size:12px;border-radius:2px}
+.news-filter-bar .news-filter-clear{border:1px solid #b9c8c3;background:transparent;color:var(--navy);padding:6px 10px;font-size:12px;cursor:pointer;border-radius:2px}
+
 .news-list{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--card)}
-.news-item{display:flex;align-items:center;gap:14px;padding:15px 20px;border-bottom:1px solid var(--line);cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%;background:transparent;border-left:0;border-right:0;border-top:0;transition:background .15s}
+.news-item{display:block;padding:15px 20px;border-bottom:1px solid var(--line);cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%;background:transparent;border-left:0;border-right:0;border-top:0;transition:background .15s}
 .news-item:last-child{border-bottom:0}
 .news-item:hover{background:#fafaf5}
 .news-item:hover .news-item-title{color:var(--navy)}
+.news-item-head{display:flex;align-items:center;gap:12px}
 .news-item-cat{display:inline-flex;align-items:center;padding:4px 10px;font-size:11px;font-weight:600;color:#fff;border-radius:2px;white-space:nowrap;flex-shrink:0;letter-spacing:.3px}
-.news-item-title{flex:1;font-size:14px;font-weight:500;color:var(--ink);line-height:1.55;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;transition:color .15s}
+.news-item-title{flex:1;font-size:14px;font-weight:500;color:var(--ink);line-height:1.6;transition:color .15s}
 .news-item-date{font-size:12px;color:var(--muted);white-space:nowrap;flex-shrink:0;font-family:Georgia,serif}
+.news-item-meta{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.news-item-meta span{font-size:11px;color:#5c6f7a;background:#eef1ee;padding:3px 9px;border-radius:2px}
 @media(max-width:600px){
-  .news-item{flex-wrap:wrap;gap:8px 12px;padding:13px 16px}
-  .news-item-title{width:100%;flex-basis:100%;-webkit-line-clamp:3;order:2}
-  .news-item-cat{order:1}
-  .news-item-date{order:1;margin-left:auto}
+  .news-item{padding:13px 16px}
+  .news-item-head{flex-wrap:wrap;gap:8px}
+  .news-item-date{margin-left:auto}
+  .news-item-title{flex-basis:100%;order:2;font-size:14px}
 }
 
 /* 资讯详情弹层 */
@@ -76,10 +84,25 @@ button.item-card{font:inherit;color:inherit;text-align:left;width:100%;appearanc
 .news-detail-head h2{font-size:22px;margin:6px 0 0;font-weight:650;line-height:1.4}
 .news-detail-meta{display:flex;gap:10px;font-size:12px;color:#a8c7c3;flex-wrap:wrap;margin-bottom:6px;align-items:center}
 .news-detail-cat{display:inline-flex;padding:3px 9px;font-size:11px;font-weight:600;color:#fff;border-radius:2px}
-.news-detail-body{padding:24px 27px 30px;font-size:14px;line-height:1.95;color:var(--ink);overflow-wrap:anywhere}
-.news-detail-body img{max-width:100%;display:block;margin:0 auto 18px;border-radius:2px}
-.news-detail-body p{margin:0 0 14px}
-.news-detail-source{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.news-detail-body{padding:24px 27px 30px;font-size:15px;line-height:1.95;color:var(--ink);overflow-wrap:anywhere}
+.news-detail-body h1,.news-detail-body h2,.news-detail-body h3,.news-detail-body h4{margin:22px 0 12px;font-weight:650;line-height:1.4;color:var(--navy)}
+.news-detail-body h1{font-size:23px}
+.news-detail-body h2{font-size:20px}
+.news-detail-body h3{font-size:18px}
+.news-detail-body h4{font-size:16px}
+.news-detail-body p{margin:0 0 15px}
+.news-detail-body ul,.news-detail-body ol{margin:0 0 15px;padding-left:26px}
+.news-detail-body li{margin-bottom:7px}
+.news-detail-body blockquote{margin:16px 0;padding:12px 20px;border-left:3px solid var(--gold);background:#f7f4ec;color:#4a5c6a;font-style:normal}
+.news-detail-body a{color:var(--blue);text-decoration:underline}
+.news-detail-body img{max-width:100%;display:block;margin:14px auto;border-radius:2px}
+.news-detail-body hr{border:0;border-top:1px solid var(--line);margin:20px 0}
+.news-detail-body strong{font-weight:700;color:var(--ink)}
+.news-detail-body em{font-style:italic}
+.news-detail-body table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px}
+.news-detail-body th,.news-detail-body td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+.news-detail-body th{background:#eef1ee;font-weight:600}
+.news-detail-source{margin-top:20px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
 .news-detail-source a{color:var(--blue);text-decoration:underline}
 
 @media(max-width:760px){
@@ -135,9 +158,18 @@ button.item-card{font:inherit;color:inherit;text-align:left;width:100%;appearanc
 <div class="grid grid-demos" id="demos"><div class="empty">正在加载研究看板……</div></div><div class="more-wrap"><button class="more-btn" id="load-more" type="button">加载更多看板 ↓</button></div>
 </section>
 
-<!-- 出海资讯（列表模式） -->
+<!-- 出海资讯（列表模式 · 支持国家/产业筛选） -->
 <section class="section" id="news-section">
-<div class="section-heading"><div><div class="section-kicker">04 / OUTBOUND NEWS</div><h2>出海资讯</h2><p>政策、准入认证、市场动态与案例，按国家与产业持续更新。点击任意一条查看详情。</p></div><div class="section-tools"><a class="quick-add" data-admin-add="news" href="admin.html?type=news&new=1">＋ 新增</a><span class="count" id="news-count">—</span></div></div>
+<div class="section-heading"><div><div class="section-kicker">04 / OUTBOUND NEWS</div><h2>出海资讯</h2><p>政策、准入认证、市场动态与案例，可按国家、产业与类别组合筛选。点击任意一条查看详情。</p></div><div class="section-tools"><a class="quick-add" data-admin-add="news" href="admin.html?type=news&new=1">＋ 新增</a><span class="count" id="news-count">—</span></div></div>
+
+<!-- 资讯专用筛选条 -->
+<div class="news-filter-bar" id="news-filter-bar">
+  <span>筛选：</span>
+  <select id="news-filter-country" aria-label="按国家筛选资讯"><option value="">全部国家 / 地区</option></select>
+  <select id="news-filter-industry" aria-label="按产业筛选资讯"><option value="">全部产业</option></select>
+  <button type="button" class="news-filter-clear" id="news-filter-clear">清除筛选</button>
+</div>
+
 <div class="news-pills" id="news-pills" role="navigation" aria-label="资讯类别"></div>
 <div class="news-list" id="news-list"><div class="empty">正在加载出海资讯……</div></div>
 <div class="more-wrap"><button class="more-btn" id="news-load-more" type="button">加载更多资讯 ↓</button></div>
@@ -203,6 +235,24 @@ function viewerUrl(d){return `viewer.html?id=${encodeURIComponent(d.id)}`;}
 function setOptions(id,items,labelFn,valueFn){const el=document.getElementById(id);const first=el.options[0];el.innerHTML="";el.appendChild(first);items.forEach(item=>{const o=document.createElement("option");o.value=valueFn(item);o.textContent=labelFn(item);el.appendChild(o);});}
 function dashboardTags(d){const out=[];const c=allCountries.find(x=>x.id===d.country_id);const i=allIndustries.find(x=>x.id===d.industry_id);if(c?.name)out.push(c.name);if(i?.name)out.push(i.name);(Array.isArray(d.tags)?d.tags:[]).forEach(t=>{if(t&&!out.includes(t))out.push(t)});return out;}
 
+/* 富文本内容基础清理：防止脚本、事件等进入页面 */
+function sanitizeRichHtml(html){
+  if(!html)return "";
+  const doc=new DOMParser().parseFromString("<div>"+String(html)+"</div>","text/html");
+  const root=doc.body.firstChild;
+  if(!root)return "";
+  root.querySelectorAll("script,style,iframe,object,embed,form,link,meta,noscript").forEach(el=>el.remove());
+  root.querySelectorAll("*").forEach(el=>{
+    for(const attr of [...el.attributes]){
+      const n=attr.name.toLowerCase();
+      if(n.startsWith("on")||n==="srcdoc"||n==="style"&&/expression\s*\(/i.test(attr.value)) el.removeAttribute(attr.name);
+      if((n==="href"||n==="src") && /^\s*(javascript|data):/i.test(attr.value)) el.removeAttribute(attr.name);
+    }
+    if(el.tagName==="A"){el.setAttribute("target","_blank");el.setAttribute("rel","noopener noreferrer");}
+  });
+  return root.innerHTML;
+}
+
 /* 分类匹配 */
 function dashboardsFor(kind,id,name){
 const n=String(name||"").trim().toLowerCase();
@@ -256,19 +306,27 @@ function newsItemHtml(n){
   const date=n.published_at?String(n.published_at).slice(0,10):"";
   const cat=n.category||"";
   const color=newsCategoryColor(cat);
+  const c=allCountries.find(x=>x.id===n.country_id);
+  const i=allIndustries.find(x=>x.id===n.industry_id);
+  const meta=[];
+  if(c?.name)meta.push(c.name);
+  if(i?.name)meta.push(i.name);
   const catHtml=cat
     ? `<span class="news-item-cat" style="background:${safe(color)}">${safe(cat)}</span>`
     : `<span class="news-item-cat" style="background:#9aa4a3">资讯</span>`;
   return `<button type="button" class="news-item" data-news-id="${safe(n.id)}">
-    ${catHtml}
-    <span class="news-item-title">${safe(n.name)}</span>
-    <span class="news-item-date">${safe(date)}</span>
+    <div class="news-item-head">
+      ${catHtml}
+      <span class="news-item-title">${safe(n.name)}</span>
+      <span class="news-item-date">${safe(date)}</span>
+    </div>
+    ${meta.length?`<div class="news-item-meta">${meta.map(t=>`<span>${safe(t)}</span>`).join("")}</div>`:""}
   </button>`;
 }
 function renderNewsPage(){
   const q=document.getElementById("dashboard-search").value.trim().toLowerCase();
-  const country=document.getElementById("filter-country").value;
-  const industry=document.getElementById("filter-industry").value;
+  const country=document.getElementById("news-filter-country").value;
+  const industry=document.getElementById("news-filter-industry").value;
   const rows=allNews.filter(n=>{
     if(activeNewsCat && String(n.category||"")!==activeNewsCat)return false;
     if(country && n.country_id!==country)return false;
@@ -284,7 +342,7 @@ function renderNewsPage(){
   const visible=rows.slice(0,newsVisibleCount);
   document.getElementById("news-list").innerHTML=visible.length
     ? visible.map(newsItemHtml).join("")
-    : `<div class="empty" style="border:0;background:transparent">暂无匹配的出海资讯。可以尝试更换类别或关键词。</div>`;
+    : `<div class="empty" style="border:0;background:transparent">暂无匹配的出海资讯。可以尝试更换类别、国家或产业。</div>`;
   document.getElementById("news-count").textContent=`${rows.length} 条资讯`;
   const more=document.getElementById("news-load-more");
   more.disabled=newsVisibleCount>=rows.length;
@@ -301,8 +359,8 @@ function openNewsDetail(id){
     `${n.category?`<span class="news-detail-cat" style="background:${safe(color)}">${safe(n.category)}</span>`:""}${date?`<span>${safe(date)}</span>`:""}${c?`<span>${safe(c.name)}</span>`:""}${i?`<span>${safe(i.name)}</span>`:""}`;
   document.getElementById("news-detail-title").textContent=n.name||"";
   const parts=[];
-  if(n.description)parts.push(`<p>${safe(n.description)}</p>`);
-  if(n.content)parts.push(`<p>${safe(n.content).replace(/\n/g,"<br>")}</p>`);
+  if(n.description)parts.push(`<p style="color:#4a5c6a;font-style:italic;background:#f7f4ec;padding:12px 16px;border-left:3px solid #c5a46a">${safe(n.description)}</p>`);
+  if(n.content)parts.push(`<div class="news-detail-rich">${sanitizeRichHtml(n.content)}</div>`);
   if(n.source_url||n.source_name){
     parts.push(`<div class="news-detail-source">来源：${n.source_url?`<a href="${safe(n.source_url)}" target="_blank" rel="noopener noreferrer">${safe(n.source_name||n.source_url)}</a>`:safe(n.source_name||"")}</div>`);
   }
@@ -330,6 +388,7 @@ function applyFilters(resetPage=true){
   const industriesEl=document.getElementById("industries");
   const demosEl=document.getElementById("demos-section");
   const newsEl=document.getElementById("news-section");
+  const boardFilters=document.getElementById("board-filters");
 
   let showMarkets=false,showIndustries=false,showDemos=false,showNews=false;
   if(activeView==="markets"){showMarkets=true;}
@@ -341,6 +400,8 @@ function applyFilters(resetPage=true){
   industriesEl.classList.toggle("view-hidden",!showIndustries);
   demosEl.classList.toggle("view-hidden",!showDemos);
   newsEl.classList.toggle("view-hidden",!showNews);
+  // 看板页下拉：资讯视图下隐藏（资讯有自己的筛选条）
+  boardFilters.classList.toggle("view-hidden",activeView==="news");
 
   filteredDashboards=allDashboards.filter(d=>{
     const tags=dashboardTags(d);
@@ -413,10 +474,15 @@ allCountries=countries.data||[];allIndustries=industries.data||[];allDashboards=
 await loadNewsCategories();
 await loadNews();
 renderNewsPills();
+
 render("countries",allCountries,(r,i)=>categoryCard({title:r.name,desc:r.description,tag:"国家市场",index:i+1,kind:"country",id:r.id}),"country-count");
 render("industries-list",allIndustries,(r,i)=>categoryCard({title:r.name,desc:r.description,tag:r.category||"产业领域",index:i+1,kind:"industry",id:r.id}),"industry-count");
 setOptions("filter-country",allCountries,x=>x.name,x=>x.id);
 setOptions("filter-industry",allIndustries,x=>x.name,x=>x.id);
+// 资讯筛选条的国家/产业选项
+setOptions("news-filter-country",allCountries,x=>x.name,x=>x.id);
+setOptions("news-filter-industry",allIndustries,x=>x.name,x=>x.id);
+
 const tags=[...new Set(allDashboards.flatMap(d=>dashboardTags(d)))].sort((a,b)=>a.localeCompare(b,"zh-CN"));
 setOptions("filter-tag",tags,x=>x,x=>x);
 applyFilters();
@@ -455,6 +521,18 @@ document.getElementById("news-list").addEventListener("click",e=>{
 document.getElementById("news-detail-close").addEventListener("click",closeNewsDetail);
 document.getElementById("news-detail").addEventListener("click",e=>{if(e.target.id==="news-detail")closeNewsDetail();});
 
+/* 资讯专用筛选条 */
+document.getElementById("news-filter-country").addEventListener("change",()=>{newsVisibleCount=6;renderNewsPage();});
+document.getElementById("news-filter-industry").addEventListener("change",()=>{newsVisibleCount=6;renderNewsPage();});
+document.getElementById("news-filter-clear").addEventListener("click",()=>{
+  document.getElementById("news-filter-country").value="";
+  document.getElementById("news-filter-industry").value="";
+  activeNewsCat="";
+  document.querySelectorAll(".news-pill").forEach(x=>x.classList.toggle("active",x.dataset.newsCat===""));
+  newsVisibleCount=6;
+  renderNewsPage();
+});
+
 document.addEventListener("click",e=>{
 const trigger=e.target.closest("[data-category-kind]");
 if(trigger){openCategory(trigger.dataset.categoryKind,trigger.dataset.categoryId,trigger.dataset.categoryName);return;}
@@ -470,6 +548,10 @@ document.getElementById("dashboard-search").value="";
 document.getElementById("filter-country").value="";
 document.getElementById("filter-industry").value="";
 document.getElementById("filter-tag").value="";
+document.getElementById("news-filter-country").value="";
+document.getElementById("news-filter-industry").value="";
+activeNewsCat="";
+document.querySelectorAll(".news-pill").forEach(x=>x.classList.toggle("active",x.dataset.newsCat===""));
 applyFilters();
 });
 document.getElementById("load-more").addEventListener("click",()=>{visibleCount+=pageSize;renderDashboardPage();});
