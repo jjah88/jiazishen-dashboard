@@ -42,7 +42,6 @@ button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:650px){main{padding:0 12px 30px}.top{padding:20px 14px}.row{grid-template-columns:1fr}.panel{padding:16px}.item{align-items:flex-start;flex-direction:column}.item-actions{width:100%}}
 #page_url{display:none!important}
 
-/* 富文本编辑器 */
 .rich-wrap{border:1px solid #d7dfe8;border-radius:6px;background:#fff;overflow:hidden}
 .rich-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px;background:#f7f9fb;border-bottom:1px solid #e6ebf0}
 .rich-toolbar button{padding:6px 9px;border:1px solid transparent;background:transparent;color:#3a4d63;border-radius:4px;font-size:13px;line-height:1;cursor:pointer;min-width:30px}
@@ -409,8 +408,8 @@ async function publishBlobToPublic(blob, fileName) {
   if (!/<html[\s>]/i.test(normalizedHtml) && !/<!doctype\s+html/i.test(normalizedHtml)) throw new Error("公开发布失败：生成的文件不是有效的 HTML 页面。");
   const htmlBlob = new Blob([normalizedHtml], {type: "text/html;charset=utf-8"});
   const storage = db.storage.from(PUBLIC_DASHBOARD_BUCKET);
-  // cacheControl 从 "0" 改为 1 年：配合每次生成新路径 + 旧路径清理，浏览器可以放心长期缓存，
-  // 二次访问直接命中本地缓存，大幅缩短 viewer.html 打开时间。
+  // 关键改动：cacheControl 从 "0" 改为 1 年，让浏览器可以长期缓存公开 HTML。
+  // 每次保存都会生成新路径，旧路径会被清理，不会出现版本串。
   const { data, error } = await storage.upload(publicPath, htmlBlob, {cacheControl:"31536000",upsert:false,contentType:"text/html; charset=utf-8"});
   if (error) throw new Error("公开 HTML 上传失败：" + (error.message || JSON.stringify(error)));
   const { data: checkBlob, error: checkError } = await storage.download(data.path);
@@ -714,4 +713,343 @@ async function saveRecord(event){
       r.source_name=$("news_source_name").value.trim()||null;
       const editorEl=$("news_content_editor");
       const rawHtml = editorEl ? editorEl.innerHTML.trim() : "";
-      const
+      const cleanedHtml = rawHtml.replace(/^(<br\s*\/?>|\s|&nbsp;)*$/i,"");
+      r.content = cleanedHtml ? rawHtml : null;
+      const pubAt=$("news_published_at").value;
+      r.published_at=pubAt?new Date(pubAt).toISOString():new Date().toISOString();
+    }
+
+    if(type==="demos"){
+      r.country_id=$("country_id").value||null;
+      r.industry_id=$("industry_id").value||null;
+      r.page_url=$("page_url").value.trim()||null;
+      r.private_path=$("private_path").value.trim()||null;
+      r.access_mode=$("access_mode").value||"public";
+      r.preview_url=$("preview_url").value.trim()||null;
+      r.preview_percent=Math.max(20,Math.min(70,Number($("preview_percent").value)||45));
+      r.qr_url=$("qr_url").value.trim()||null;
+      r.consult_text=$("consult_text").value.trim()||null;
+      r.tags=$("tags").value.split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
+
+      const currentId=$("record-id").value;
+      const oldRecord=currentId?(cache.demos||[]).find(x=>String(x.id)===String(currentId)):null;
+      const previousPageUrl=oldRecord?.page_url||r.page_url||"";
+      const previousPublicPath=publicObjectPathFromUrl(previousPageUrl);
+
+      if(!r.private_path)throw new Error("请先点击唯一的“上传看板 HTML”按钮上传一次完整 HTML。");
+
+      if(r.access_mode==="public"){
+        r.page_url=await publishPrivateMaster(r.private_path);
+        if(previousPublicPath && previousPageUrl!==r.page_url){
+          const {error:removeOldError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPublicPath]);
+          if(removeOldError)throw new Error("新公开副本已生成，但旧公开副本未能撤下。请先检查 dashboard-previews 删除权限，避免旧版本继续公开。错误："+removeOldError.message);
+        }
+        r.preview_url=null;
+      }else{
+        const previousPreviewPath=publicObjectPathFromUrl(oldRecord?.preview_url||r.preview_url||"");
+        r.preview_url=await publishPreviewFromPrivateMaster(r.private_path);
+        if(previousPreviewPath){
+          const nextPreviewPath=publicObjectPathFromUrl(r.preview_url);
+          if(nextPreviewPath && nextPreviewPath!==previousPreviewPath){
+            const {error:previewRemoveError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPreviewPath]);
+            if(previewRemoveError)console.warn("新预览已生成，但旧预览清理失败：",previewRemoveError.message);
+          }
+        }
+        if(previousPublicPath){
+          const {error:removeError}=await db.storage.from(PUBLIC_DASHBOARD_BUCKET).remove([previousPublicPath]);
+          if(removeError)throw new Error("游客预览已生成，但无法撤下公开完整版，已取消保存以避免完整版继续公开。错误："+removeError.message);
+        }
+        r.page_url=null;
+      }
+
+      const op=$("board-operation")?.value||"new";
+      if(op==="replace"&&!$("record-id").value)throw new Error("请先从列表选择要替换的看板。");
+      if(op==="new"&&$("record-id").value)$("record-id").value="";
+    }
+
+    const id=$("record-id").value;
+    const result=id
+      ? await db.from(configs[type].table).update(r).eq("id",id)
+      : await db.from(configs[type].table).insert(r);
+    if(result.error)throw result.error;
+
+    resetForm();
+    await refreshData();
+    setStatus("admin-status",type==="demos"?"看板已保存并发布/替换成功。首页将读取最新版本；旧的私有 HTML 文件保留在存储中作为备份。":"保存成功，公开首页将读取最新数据。");
+  }catch(e){
+    setStatus("admin-status","保存失败："+(e.message||String(e)));
+  }finally{
+    setBusy(false);
+  }
+}
+
+async function deleteRecord(id){
+  const r=cache[currentType].find(x=>x.id===id);
+  if(!r||!confirm(`确定删除“${r.name}”吗？此操作不可撤销。`))return;
+  setStatus("admin-status","正在删除……");
+  const result=await db.from(configs[currentType].table).delete().eq("id",id);
+  if(result.error){setStatus("admin-status","删除失败："+result.error.message);return;}
+  try{await refreshData();setStatus("admin-status","删除成功。");}
+  catch(e){setStatus("admin-status","删除完成，但刷新列表失败："+e.message);}
+}
+
+/* ============ 会员管理 ============ */
+let selectedMember=null;
+function showMemberManager(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("active"));
+  $("members-tab").classList.add("active");
+  $("content-form-panel").classList.add("hidden");
+  $("content-list-panel").classList.add("hidden");
+  $("member-panel").classList.remove("hidden");
+  $("form-title").textContent="会员管理";
+}
+async function searchMember(){
+  const email=$("member-email-search").value.trim();
+  if(!email){setStatus("member-search-status","请先填写用户注册邮箱。");return;}
+  setStatus("member-search-status","正在查找账号……");
+  $("member-search-results").innerHTML="";
+  $("member-edit-area").classList.add("hidden");
+  try{
+    const {data,error}=await db.from("member_profiles").select("user_id,email,created_at").ilike("email",email).limit(10);
+    if(error)throw error;
+    if(!data||!data.length){setStatus("member-search-status","没有找到该邮箱对应的账号。请确认用户已经注册并完成邮箱验证，或检查邮箱是否拼写正确。");return;}
+    $("member-search-results").innerHTML=data.map(u=>`<div class="item"><div><div class="item-title">${escapeHtml(u.email)}</div><div class="item-desc">用户 ID：${escapeHtml(u.user_id)}<br>注册时间：${u.created_at?new Date(u.created_at).toLocaleString("zh-CN"):"—"}</div></div><div class="item-actions"><button type="button" class="secondary" data-select-member="${escapeHtml(u.user_id)}">管理该用户</button></div></div>`).join("");
+    setStatus("member-search-status",`找到 ${data.length} 个匹配账号。请选择要开通的用户。`);
+  }catch(e){
+    setStatus("member-search-status","查找失败："+(e.message||String(e))+"。请确认已执行会员权限 SQL。");
+  }
+}
+async function selectMember(userId){
+  const {data:user,error:userError}=await db.from("member_profiles").select("user_id,email").eq("user_id",userId).single();
+  if(userError){setStatus("member-status",userError.message);return;}
+  selectedMember=user;
+  $("member-user-id").value=user.user_id;
+  $("member-selected-title").textContent="会员权益设置 · "+user.email;
+  const {data:ent,error}=await db.from("member_entitlements").select("status,starts_at,expires_at,note").eq("user_id",user.user_id).maybeSingle();
+  if(error){setStatus("member-status",error.message);return;}
+  const now=new Date();
+  $("member-start").value=ent?.starts_at?localDateTimeValue(new Date(ent.starts_at)):localDateTimeValue(now);
+  $("member-expiry").value=ent?.expires_at?localDateTimeValue(new Date(ent.expires_at)):localDateTimeValue(new Date(now.getTime()+365*24*60*60*1000));
+  $("member-note").value=ent?.note||"";
+  $("member-edit-area").classList.remove("hidden");
+  setStatus("member-status",ent?`当前状态：${ent.status}；到期时间：${ent.expires_at?new Date(ent.expires_at).toLocaleString("zh-CN"):"未设置"}`:"该用户尚无会员记录。可以在核实付款后开通。");
+}
+async function saveMembership(revoke=false){
+  if(!selectedMember){setStatus("member-status","请先查找并选择用户。");return;}
+  const button=revoke?$("member-revoke-button") : $("member-grant-button");
+  button.disabled=true;
+  try{
+    const start=$("member-start").value?new Date($("member-start").value).toISOString():new Date().toISOString();
+    const expiry=$("member-expiry").value?new Date($("member-expiry").value).toISOString():null;
+    if(!revoke&&expiry&&new Date(expiry)<=new Date(start))throw new Error("到期时间必须晚于开通时间。");
+    const payload={
+      user_id:selectedMember.user_id,
+      status:revoke?"revoked":"active",
+      starts_at:start,
+      expires_at:expiry,
+      note:$("member-note").value.trim()||null,
+      granted_by:(await db.auth.getUser()).data.user?.id||null,
+      updated_at:new Date().toISOString()
+    };
+    const {error}=await db.from("member_entitlements").upsert(payload,{onConflict:"user_id"});
+    if(error)throw error;
+    setStatus("member-status",revoke?"已撤销该用户的会员权限。":"会员已开通/更新。该账号刷新后即可访问所有已配置半公开看板的完整内容。");
+  }catch(e){
+    setStatus("member-status","操作失败："+(e.message||String(e)));
+  }finally{
+    button.disabled=false;
+  }
+}
+
+/* ============ 事件绑定 ============ */
+$("members-tab").addEventListener("click",showMemberManager);
+$("member-search-button").addEventListener("click",searchMember);
+$("member-email-search").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchMember();}});
+$("member-search-results").addEventListener("click",e=>{const b=e.target.closest("[data-select-member]");if(b)selectMember(b.dataset.selectMember);});
+$("member-grant-button").addEventListener("click",()=>saveMembership(false));
+$("member-revoke-button").addEventListener("click",()=>{if(confirm("确定撤销该用户的会员权限吗？"))saveMembership(true);});
+
+/* ============ 富文本编辑器绑定 ============ */
+const richEditor=$("news_content_editor");
+const richToolbar=$("rich-toolbar");
+if(richToolbar && richEditor){
+  richToolbar.addEventListener("mousedown",e=>{
+    const t=e.target;
+    if(t.tagName==="SELECT"||t.tagName==="OPTION"||t.tagName==="INPUT") return;
+    e.preventDefault();
+  });
+  richToolbar.addEventListener("click",e=>{
+    const btn=e.target.closest("button[data-cmd]");
+    if(!btn)return;
+    const cmd=btn.dataset.cmd;
+    const val=btn.dataset.value||null;
+    try{ document.execCommand(cmd,false,val); }catch(err){ console.warn("execCommand 失败：",cmd,err); }
+    richEditor.focus();
+  });
+  $("rich-font").addEventListener("change",()=>{
+    const v=$("rich-font").value;
+    if(v){ try{document.execCommand("fontName",false,v);}catch(e){console.warn(e);} }
+    $("rich-font").value="";
+    richEditor.focus();
+  });
+  $("rich-size").addEventListener("change",()=>{
+    const v=$("rich-size").value;
+    if(v){ try{document.execCommand("fontSize",false,v);}catch(e){console.warn(e);} }
+    $("rich-size").value="";
+    richEditor.focus();
+  });
+  $("rich-color").addEventListener("input",()=>{
+    try{document.execCommand("foreColor",false,$("rich-color").value);}catch(e){console.warn(e);}
+    richEditor.focus();
+  });
+  $("rich-hilite").addEventListener("input",()=>{
+    try{document.execCommand("hiliteColor",false,$("rich-hilite").value);}catch(e){console.warn(e);}
+    richEditor.focus();
+  });
+  $("rich-link").addEventListener("click",()=>{
+    const sel=window.getSelection();
+    if(!sel || sel.isCollapsed){ alert("请先选中要加链接的文字。"); richEditor.focus(); return; }
+    const url=prompt("请输入链接地址（含 http:// 或 https://）");
+    if(url){
+      try{document.execCommand("createLink",false,url);}catch(e){console.warn(e);}
+    }
+    richEditor.focus();
+  });
+  $("rich-unlink").addEventListener("click",()=>{
+    try{document.execCommand("unlink",false,null);}catch(e){console.warn(e);}
+    richEditor.focus();
+  });
+  $("rich-clear").addEventListener("click",()=>{
+    try{document.execCommand("removeFormat",false,null);}catch(e){console.warn(e);}
+    try{document.execCommand("formatBlock",false,"P");}catch(e){}
+    richEditor.focus();
+  });
+  richEditor.addEventListener("paste",e=>{
+    e.preventDefault();
+    const text=(e.clipboardData||window.clipboardData).getData("text/plain");
+    try{document.execCommand("insertText",false,text);}catch(err){
+      richEditor.textContent+=text;
+    }
+  });
+}
+
+$("login-form").addEventListener("submit",async e=>{
+  e.preventDefault();setStatus("login-status","正在登录……");
+  const {data,error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+  if(error){setStatus("login-status","登录失败："+error.message);return;}
+  await enterAdmin(data.user);
+});
+
+async function enterAdmin(user){
+  $("login-panel").classList.add("hidden");
+  $("admin-panel").classList.add("hidden");
+  $("denied-panel").classList.add("hidden");
+
+  let admin;
+  try {
+    const result = await db.rpc("is_admin");
+    if (result.error) throw result.error;
+    admin = result.data;
+  } catch (e) {
+    $("denied-panel").classList.remove("hidden");
+    const p = $("denied-panel").querySelector("p");
+    if (p) p.textContent = "管理员身份验证请求失败：" + (e.message || String(e));
+    console.error("Admin authorization request failed:", e);
+    return;
+  }
+
+  if (admin !== true) {
+    $("denied-panel").classList.remove("hidden");
+    const p = $("denied-panel").querySelector("p");
+    if (p) p.textContent = "管理员身份验证未通过。请检查登录账号及管理员配置。";
+    console.error("is_admin returned:", admin);
+    return;
+  }
+
+  $("admin-panel").classList.remove("hidden");
+  $("whoami").textContent = "已登录：" + (user?.email || "");
+  setStatus("admin-status", "管理员验证成功，正在加载管理数据……");
+
+  try {
+    const failed = await refreshData();
+    if(failed.length){
+      const msgs = failed.map(f=>`${configs[f.type].label}（${configs[f.type].table}）：${f.error.message||String(f.error)}`);
+      setStatus("admin-status","管理员验证成功，但以下数据表加载失败：\n"+msgs.join("\n")+"\n\n其余表仍可正常使用。");
+      console.warn("部分表加载失败：", failed);
+    }else{
+      setStatus("admin-status","管理员验证成功。可以开始管理内容。");
+    }
+  } catch (e) {
+    setStatus("admin-status","管理员身份验证成功，但管理数据加载异常："+(e.message||String(e)));
+    console.error("Admin data loading failed:", e);
+  }
+}
+
+async function logoutAdmin(){
+  await db.auth.signOut();
+  $("admin-panel").classList.add("hidden");
+  $("denied-panel").classList.add("hidden");
+  $("login-panel").classList.remove("hidden");
+  setStatus("login-status","已退出登录。");
+}
+$("logout").addEventListener("click",logoutAdmin);
+$("denied-logout").addEventListener("click",logoutAdmin);
+
+$("tabs").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-type]");if(b)showType(b.dataset.type);
+});
+
+$("record-list").addEventListener("click",e=>{
+  const edit=e.target.closest("button[data-edit]");
+  const del=e.target.closest("button[data-delete]");
+  if(edit)editRecord(edit.dataset.edit);
+  if(del)deleteRecord(del.dataset.delete);
+});
+
+$("record-form").addEventListener("submit",saveRecord);
+$("upload-qr-button").addEventListener("click",()=>$("qr-file").click());
+$("qr-file").addEventListener("change",event=>uploadQrImage(event.target.files?.[0]));
+$("upload-private-dashboard-button").addEventListener("click",()=>$("private-dashboard-file").click());
+$("private-dashboard-file").addEventListener("change",event=>uploadPrivateDashboard(event.target.files?.[0]));
+
+$("access_mode").addEventListener("change",()=>{
+  updateAccessModeUI();
+  const op=$("board-operation")?.value||"new";
+  $("save-button").textContent=op==="replace"?"保存并替换原看板":"保存并发布看板";
+});
+
+$("board-operation").addEventListener("change",()=>{
+  const op=$("board-operation").value;
+  $("replace-board-wrap").classList.toggle("hidden",op!=="replace");
+  if(op==="new"){
+    resetForm();
+    $("board-operation").value="new";
+    $("form-title").textContent="新增研究看板并发布";
+    $("save-button").textContent="上传并发布看板";
+    $("is_published").value="true";
+  }else{
+    $("save-button").textContent="上传并替换原看板";
+    if($("replace-board-id").value)editRecord($("replace-board-id").value);
+  }
+});
+$("replace-board-id").addEventListener("change",()=>{const id=$("replace-board-id").value;if(id)editRecord(id);});
+$("qr_url").addEventListener("input",()=>refreshQrPreview($("qr_url").value.trim()));
+$("reset-button").addEventListener("click",resetForm);
+
+const params = new URLSearchParams(window.location.search);
+const requestedType = params.get("type");
+const validTypes = Object.keys(configs);
+showType(validTypes.includes(requestedType) ? requestedType : "countries");
+
+(async()=>{
+  const {data:{session}}=await db.auth.getSession();
+  if(session?.user)await enterAdmin(session.user);
+  if(params.get("new")==="1"){
+    setTimeout(()=>{
+      if(!$("admin-panel").classList.contains("hidden")) $("name").focus();
+    },250);
+  }
+})();
+</script>
+</body>
+</html>
