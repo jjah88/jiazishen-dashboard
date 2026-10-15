@@ -230,7 +230,9 @@ return `<button type="button" class="item-card is-link category-trigger" data-ca
 }
 function render(id,rows,mapper,countId){document.getElementById(id).innerHTML=rows.length?rows.map(mapper).join(""):`<div class="empty">暂无已发布内容，后续将在这里更新。</div>`;if(countId)document.getElementById(countId).textContent=`${rows.length} 项内容`;}
 const pageSize=9;let allDashboards=[],filteredDashboards=[],visibleCount=pageSize,allCountries=[],allIndustries=[],activeView="demos";
-let allNews=[],allNewsCategories=[],newsVisibleCount=6,activeNewsCat="";
+let allNews=[],allNewsCategories=[],newsVisibleCount=10,activeNewsCat="";
+let isNewsMember=false;
+const NEWS_FREE_LIMIT=10;
 function viewerUrl(d){return `viewer.html?id=${encodeURIComponent(d.id)}`;}
 function setOptions(id,items,labelFn,valueFn){const el=document.getElementById(id);const first=el.options[0];el.innerHTML="";el.appendChild(first);items.forEach(item=>{const o=document.createElement("option");o.value=valueFn(item);o.textContent=labelFn(item);el.appendChild(o);});}
 function dashboardTags(d){const out=[];const c=allCountries.find(x=>x.id===d.country_id);const i=allIndustries.find(x=>x.id===d.industry_id);if(c?.name)out.push(c.name);if(i?.name)out.push(i.name);(Array.isArray(d.tags)?d.tags:[]).forEach(t=>{if(t&&!out.includes(t))out.push(t)});return out;}
@@ -327,26 +329,87 @@ function renderNewsPage(){
   const q=document.getElementById("dashboard-search").value.trim().toLowerCase();
   const country=document.getElementById("news-filter-country").value;
   const industry=document.getElementById("news-filter-industry").value;
+
   const rows=allNews.filter(n=>{
     if(activeNewsCat && String(n.category||"")!==activeNewsCat)return false;
     if(country && n.country_id!==country)return false;
     if(industry && n.industry_id!==industry)return false;
+
     if(q){
       const c=allCountries.find(x=>x.id===n.country_id);
       const i=allIndustries.find(x=>x.id===n.industry_id);
-      const hay=[n.name,n.description,n.content,n.category,n.source_name,c?.name,i?.name].filter(Boolean).join(" ").toLowerCase();
+      const hay=[
+        n.name,n.description,n.content,n.category,
+        n.source_name,c?.name,i?.name
+      ].filter(Boolean).join(" ").toLowerCase();
+
       if(!hay.includes(q))return false;
     }
     return true;
   });
-  const visible=rows.slice(0,newsVisibleCount);
-  document.getElementById("news-list").innerHTML=visible.length
+
+  // 游客最多展示10条；有效会员可以查看全部。
+  const limit=isNewsMember?rows.length:NEWS_FREE_LIMIT;
+  const visibleLimit=Math.min(newsVisibleCount,limit);
+  const visible=rows.slice(0,visibleLimit);
+
+  const list=document.getElementById("news-list");
+  list.innerHTML=visible.length
     ? visible.map(newsItemHtml).join("")
-    : `<div class="empty" style="border:0;background:transparent">暂无匹配的出海资讯。可以尝试更换类别、国家或产业。</div>`;
-  document.getElementById("news-count").textContent=`${rows.length} 条资讯`;
+    : `<div class="empty" style="border:0;background:transparent">
+        暂无匹配的出海资讯。可以尝试更换类别、国家或产业。
+      </div>`;
+
+  const count=document.getElementById("news-count");
+  count.textContent=isNewsMember
+    ? `${rows.length} 条资讯`
+    : `${visible.length} / ${NEWS_FREE_LIMIT} 条免费资讯`;
+
   const more=document.getElementById("news-load-more");
-  more.disabled=newsVisibleCount>=rows.length;
-  more.textContent=more.disabled?"已显示全部资讯":"加载更多资讯 ↓";
+
+  if(!isNewsMember && rows.length>NEWS_FREE_LIMIT){
+    more.disabled=false;
+    more.textContent="解锁全部资讯 · 会员专享";
+    more.dataset.action="membership";
+  }else if(visibleLimit<rows.length){
+    more.disabled=false;
+    more.textContent="加载更多资讯 ↓";
+    more.dataset.action="more";
+  }else{
+    more.disabled=true;
+    more.textContent="已显示全部资讯";
+    more.dataset.action="";
+  }
+
+  // 游客达到免费上限时显示会员提示。
+  let wall=document.getElementById("news-member-wall");
+
+  if(!isNewsMember && rows.length>NEWS_FREE_LIMIT){
+    if(!wall){
+      wall=document.createElement("div");
+      wall.id="news-member-wall";
+      wall.style.cssText=
+        "margin-top:16px;padding:24px;background:#eef0eb;border:1px solid #dfe3de;text-align:center;line-height:1.9";
+      list.after(wall);
+    }
+
+    wall.innerHTML=`
+      <div style="font-size:16px;font-weight:650;color:#10263d">
+        更多国家、更多产业的完整结构化资讯
+      </div>
+      <p style="font-size:13px;color:#6c7a83;margin:8px 0 14px">
+        当前为游客浏览模式，免费展示最新10条资讯。
+        成为甲子申知识星球会员并联系管理员开通网站权限，
+        即可查看全部资讯及国家、产业和类别筛选结果。
+      </p>
+      <a href="member.html"
+         style="display:inline-block;background:#10263d;color:white;padding:10px 18px;font-size:13px">
+        会员登录 / 注册并申请开通
+      </a>`;
+    wall.hidden=false;
+  }else if(wall){
+    wall.hidden=true;
+  }
 }
 function openNewsDetail(id){
   const n=allNews.find(x=>String(x.id)===String(id));
@@ -424,6 +487,34 @@ function renderDashboardPage(){
   more.disabled=visibleCount>=filteredDashboards.length;
   more.textContent=more.disabled?"已显示全部结果":"加载更多看板 ↓";
 }
+async function checkNewsMembership(){
+  try{
+    const {data:{session},error:sessionError}=await db.auth.getSession();
+    if(sessionError)throw sessionError;
+
+    if(!session?.user)return false;
+
+    const {data,error}=await db
+      .from("member_entitlements")
+      .select("status,starts_at,expires_at")
+      .eq("user_id",session.user.id)
+      .maybeSingle();
+
+    if(error)throw error;
+    if(!data||data.status!=="active")return false;
+
+    const now=Date.now();
+    const started=!data.starts_at||
+      new Date(data.starts_at).getTime()<=now;
+    const notExpired=!data.expires_at||
+      new Date(data.expires_at).getTime()>now;
+
+    return started&&notExpired;
+  }catch(e){
+    console.warn("资讯会员状态读取失败：",e);
+    return false;
+  }
+}
 async function loadNews(){
   try{
     const {data,error}=await db.from("news")
@@ -471,6 +562,9 @@ allCountries=c2.data||[];allIndustries=i2.data||[];allDashboards=(d2.data||[]).m
 }else{
 allCountries=countries.data||[];allIndustries=industries.data||[];allDashboards=(demos.data||[]).map(d=>({...d,access_mode:d.access_mode||"public",tags:Array.isArray(d.tags)?d.tags:[]}));
 }
+isNewsMember=await checkNewsMembership();
+newsVisibleCount=isNewsMember?6:NEWS_FREE_LIMIT;
+
 await loadNewsCategories();
 await loadNews();
 renderNewsPills();
@@ -513,7 +607,16 @@ document.getElementById("news-pills").addEventListener("click",e=>{
   newsVisibleCount=6;
   renderNewsPage();
 });
-document.getElementById("news-load-more").addEventListener("click",()=>{newsVisibleCount+=6;renderNewsPage();});
+document.getElementById("news-load-more").addEventListener("click",()=>{
+  if(!isNewsMember){
+    const wall=document.getElementById("news-member-wall");
+    if(wall)wall.scrollIntoView({behavior:"smooth",block:"center"});
+    return;
+  }
+
+  newsVisibleCount+=6;
+  renderNewsPage();
+});
 document.getElementById("news-list").addEventListener("click",e=>{
   const b=e.target.closest("[data-news-id]");
   if(b)openNewsDetail(b.dataset.newsId);
